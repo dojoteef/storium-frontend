@@ -1,0 +1,12 @@
+version: '3.3'
+
+services:
+  backend:
+    build: .
+    ports:
+      - target: 8000
+        published: 8080
+        protocol: tcp
+        mode: host
+  db:
+    postgres:12

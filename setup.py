@@ -16,8 +16,10 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages('src'),
     package_data={'': ['*.sql']},
+    scripts=['scripts/gw'],
     install_requires=[
         "fastapi",
-        "uvicorn"
+        "uvicorn",
+        "gunicorn"
     ],
 )

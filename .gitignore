@@ -18,3 +18,9 @@ venv
 # aactivator
 .activate.sh
 .deactivate.sh
+
+# mypy
+.mypy_cache
+
+# vim
+.vim

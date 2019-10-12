@@ -9,4 +9,4 @@ services:
         protocol: tcp
         mode: host
   db:
-    postgres:12
+    image: postgres:12

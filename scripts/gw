@@ -6,7 +6,7 @@ BIND="${HOST:-0.0.0.0}:${PORT:-8000}"
 
 PARAMS=""
 if [ -n "$RELOAD" ]; then
-  PARAMS+=" --reload"
+  PARAMS="$PARAMS --reload"
 fi
 
-gunicorn -k uvicorn.workers.UvicornWorker -b "$BIND" woolgatherer:app -w "$WORKERS" "${PARAMS[@]}"
+gunicorn -k uvicorn.workers.UvicornWorker -b $BIND woolgatherer:app -w $WORKERS $PARAMS

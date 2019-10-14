@@ -15,5 +15,26 @@ test: install requirements-dev.txt
 	. venv/bin/activate; pip install -r requirements-dev.txt && coverage run -m pytest -v
 
 clean:
-	rm -rf venv pygmy.egg-info build dist .coverage .pytest_cache .activate.sh .mypy_cache
+	rm -rf venv pygmy.egg-info build dist .coverage .pytest_cache .activate.sh \
+		.mypy_cache docker-stack.yml
 	find . -iname "*.pyc" -delete
+
+deploy: src docker-compose.shared.yml docker-compose.prod.yml
+	test -d build && rm -rf build
+	mkdir build
+	docker-compose \
+		-f docker-compose.shared.yml \
+		-f docker-compose.prod.yml \
+		config > build/docker-compose.yml
+	docker-compose -f build/docker-compose.yml build
+
+deploy-dev: src docker-compose.shared.yml docker-compose.dev.yml
+	test -d build && rm -rf build
+	mkdir build
+	docker-compose \
+		-f docker-compose.shared.yml \
+		-f docker-compose.dev.yml \
+		config > build/docker-compose.yml
+	docker-compose -f build/docker-compose.yml down -v --remove-orphans
+	docker-compose -f build/docker-compose.yml build
+	docker-compose -f build/docker-compose.yml up -d

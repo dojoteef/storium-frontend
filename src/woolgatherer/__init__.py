@@ -3,7 +3,7 @@ Main entry point for woolgatherer. This is where we setup the app.
 """
 from fastapi import FastAPI
 
-from .routers import stories, suggestions
+from woolgatherer.routers import stories, suggestions
 
 
 app = FastAPI()

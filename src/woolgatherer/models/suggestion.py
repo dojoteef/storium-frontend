@@ -35,4 +35,3 @@ class Feedback(BaseModel):
     )
 
     response: str = Field(..., description="The feedback from the user.")
-

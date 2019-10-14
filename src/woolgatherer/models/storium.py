@@ -298,7 +298,8 @@ class Card(BaseModel):
         ...,
         description="""true if the narrator/host deletes the card from the game. The object still
         persists because existing content may still reference it, deletion just prevents the card
-        from being visible / an option for future choices.""",)
+        from being visible / an option for future choices.""",
+    )
 
     is_wild: bool = Field(
         ...,

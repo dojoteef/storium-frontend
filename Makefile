@@ -9,11 +9,11 @@ venv:
 	echo "deactivate" > .deactivate.sh
 
 install: venv
-	. venv/bin/activate; pip install .
+	. venv/bin/activate; pip install --verbose .[all]
 
 test: install requirements-dev.txt
 	. venv/bin/activate; pip install -r requirements-dev.txt && coverage run -m pytest -v
 
 clean:
-	rm -rf venv pygmy.egg-info build dist .coverage .pytest_cache .activate.sh
+	rm -rf venv pygmy.egg-info build dist .coverage .pytest_cache .activate.sh .mypy_cache
 	find . -iname "*.pyc" -delete

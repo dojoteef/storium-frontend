@@ -19,22 +19,16 @@ clean:
 		.mypy_cache docker-stack.yml
 	find . -iname "*.pyc" -delete
 
-deploy: src docker-compose.shared.yml docker-compose.prod.yml
-	test -d build && rm -rf build
-	mkdir build
+deploy-%: src docker-compose.shared.yml docker-compose.%.yml
+	test -d build/$* && rm -rf build/$* || true
+	mkdir build/$*
 	docker-compose \
 		-f docker-compose.shared.yml \
-		-f docker-compose.prod.yml \
-		config > build/docker-compose.yml
-	docker-compose -f build/docker-compose.yml build
+		-f docker-compose.$*.yml \
+		config > build/$*/docker-compose.yml
+	docker-compose -f build/$*/docker-compose.yml down -v --remove-orphans
+	docker-compose -f build/$*/docker-compose.yml build
+	docker-compose -f build/$*/docker-compose.yml up -d
 
-deploy-dev: src docker-compose.shared.yml docker-compose.dev.yml
-	test -d build && rm -rf build
-	mkdir build
-	docker-compose \
-		-f docker-compose.shared.yml \
-		-f docker-compose.dev.yml \
-		config > build/docker-compose.yml
-	docker-compose -f build/docker-compose.yml down -v --remove-orphans
-	docker-compose -f build/docker-compose.yml build
-	docker-compose -f build/docker-compose.yml up -d
+shutdown-%: build/%
+	docker-compose -f build/$*/docker-compose.yml down -v --remove-orphans

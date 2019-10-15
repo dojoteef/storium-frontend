@@ -5,15 +5,13 @@ import json
 import hashlib
 from importlib.util import find_spec
 
-from pydantic import Json
-
 
 def has_postgres() -> bool:
     """ Whether to use postgres """
     return find_spec("psycopg2") is not None
 
 
-def normalized_json_str(json_obj: Json) -> str:
+def normalized_json_str(json_obj: dict) -> str:
     """
     Normalize a JSON object by sorting it and removing any extraneous space. We need
     this in order to have a consistent hash that we can compute for JSON in the database
@@ -22,10 +20,10 @@ def normalized_json_str(json_obj: Json) -> str:
     """
     return json.dumps(
         json_obj, sort_keys=True, ensure_ascii=False, separators=(",", ":")
-    )
+    ).encode("utf-8")
 
 
-def json_hash(json_obj: Json) -> str:
+def json_hash(json_obj: dict) -> str:
     """
     Generate a consistent hash for a given JSON object.
     """

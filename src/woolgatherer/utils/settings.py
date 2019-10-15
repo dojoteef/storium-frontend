@@ -17,8 +17,8 @@ class _DevSettings(BaseSettings):
     db_host: Optional[str] = None
     db_port: Optional[int] = None
     db_name: str = "woolgatherer.db"
-    db_query: Optional[dict] = None
-    dsn: DSN
+    db_query: Optional[dict] = {"check_same_thread": False}
+    dsn: DSN = None
 
     class Config(object):
         """ Additional configuration for the settings """

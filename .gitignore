@@ -24,3 +24,6 @@ venv
 
 # tag files
 .pytags
+
+# deployment
+deploy

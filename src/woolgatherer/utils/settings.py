@@ -2,12 +2,13 @@
 Encapsulate the configuration for woolgatherer
 """
 from typing import Optional
-from importlib.util import find_spec
 
 from pydantic import BaseSettings, DSN, SecretStr
 
+from woolgatherer.db.utils import has_postgres
 
-class _BasicSettings(BaseSettings):
+
+class _DevSettings(BaseSettings):
     """ The basic app settings that don't require Postgres """
 
     db_driver: str = "sqlite"
@@ -25,7 +26,7 @@ class _BasicSettings(BaseSettings):
         prefix = "GW_"
 
 
-class _Settings(_BasicSettings):
+class _Settings(_DevSettings):
     """ The app settings """
 
     db_driver: str = "postgres+psycopg2"
@@ -38,7 +39,7 @@ class _Settings(_BasicSettings):
 
 # Forward declare Settings to make mypy happy
 Settings: BaseSettings
-if find_spec("psycopg2"):
+if has_postgres():
     Settings = _Settings()
 else:
-    Settings = _BasicSettings()
+    Settings = _DevSettings()

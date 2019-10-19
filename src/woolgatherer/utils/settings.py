@@ -6,6 +6,7 @@ from typing import Optional
 from pydantic import BaseSettings, DSN, SecretStr
 
 from woolgatherer.db.utils import has_postgres
+from woolgatherer.models.utils import Field
 
 
 class _DevSettings(BaseSettings):
@@ -17,8 +18,11 @@ class _DevSettings(BaseSettings):
     db_host: Optional[str] = None
     db_port: Optional[int] = None
     db_name: str = "woolgatherer.db"
-    db_query: Optional[dict] = {"check_same_thread": False}
-    dsn: DSN = None
+    db_query: Optional[dict] = None
+    dsn: DSN = Field(
+        None,
+        description="""The data source name, constructed from the various db fields""",
+    )
 
     class Config(object):
         """ Additional configuration for the settings """
@@ -29,16 +33,17 @@ class _DevSettings(BaseSettings):
 class _Settings(_DevSettings):
     """ The app settings """
 
-    db_driver: str = "postgres+psycopg2"
+    db_driver: str = "postgresql"
     db_user: Optional[str] = "postgres"
     db_password: Optional[SecretStr] = None
-    db_host: Optional[str] = "localhost"
+    db_host: Optional[str] = "db"
     db_port: Optional[int] = 5432
     db_name: str = "woolgatherer"
+    db_query: Optional[dict] = None
 
 
 # Forward declare Settings to make mypy happy
-Settings: BaseSettings
+Settings: _DevSettings
 if has_postgres():
     Settings = _Settings()
 else:

@@ -1,30 +1,30 @@
 """
 Operations which can be conducted on stories
 """
-from typing import Optional
+import logging
+from typing import Any, Dict, Optional
 
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from databases import Database
 
 from woolgatherer.db.utils import json_hash
 from woolgatherer.db_models.storium import Story, StoryStatus
 
 
-def create_story(db: Session, story_dict: dict) -> str:
+async def create_story(db: Database, story_dict: Dict[str, Any]) -> str:
     """ Create a story in the db """
-    story_hash = json_hash(story_dict)
+    story_json, story_hash = json_hash(story_dict)
+    story = Story(story=story_json, hash=story_hash)
     try:
-        db.add(Story(json=story_dict, json_hash=story_hash))
-        db.commit()
-    except IntegrityError:
-        # If they try to create the same story, it will fail the uniqueness check.
-        # Simply return the story_hash since we already have it in the db.
-        db.rollback()
+        await db.execute(query=story.__table__.insert(), values=story.dict())
+    except:
+        pass
 
     return story_hash
 
 
-def get_story_status(db: Session, story_hash: str) -> Optional[StoryStatus]:
+async def get_story_status(db: Database, story_hash: str) -> Optional[StoryStatus]:
     """ Get the current story status """
-    story = db.query(Story).filter(Story.json_hash == story_hash).one_or_none()
-    return story.status if story else None
+    return await db.fetch_val(
+        query=Story.__table__.select().where(Story.__table__.c.hash == story_hash),
+        column="status",
+    )

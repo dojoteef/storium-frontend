@@ -15,4 +15,4 @@ class StoryStatus(AutoNamedEnum):
     """
 
     pending = auto()
-    read = auto()
+    ready = auto()

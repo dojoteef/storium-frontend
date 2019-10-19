@@ -2,6 +2,8 @@ version: '3.3'
 
 services:
   backend:
+    build:
+      dockerfile: Dockerfile
     ports:
       - "8080:8000"
     image: "woolgatherer:prod"

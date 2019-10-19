@@ -1,4 +1,5 @@
-.PHONY: test
+.PHONY: test $(wildcard build-%) $(wildcard shutdown-%) \
+	$(wildcard deploy-%) $(wildcard redeploy-%)
 
 venv:
 	# Need to install pip separately into the venv for Debian/Ubuntu systems
@@ -9,25 +10,30 @@ venv:
 	echo "deactivate" > .deactivate.sh
 
 install: venv
-	. venv/bin/activate; pip install --verbose .
+	. venv/bin/activate; pip install -e .[sqlite]
 
 test: install requirements-dev.txt
 	. venv/bin/activate; pip install -r requirements-dev.txt && coverage run -m pytest -v
 
 clean:
-	rm -rf venv pygmy.egg-info deploy dist .coverage .pytest_cache .activate.sh \
-		.mypy_cache docker-stack.yml
+	rm -rf venv deploy .pytest_cache .activate.sh .mypy_cache
 	find . -iname "*.pyc" -delete
 
-deploy-%: src docker-compose.shared.yml docker-compose.%.yml shutdown-%
-	test -d deploy/$* && rm -rf deploy/$* || true
-	mkdir deploy/$*
+build-%: src docker-compose.shared.yml docker-compose.%.yml
+	test -d build/$* && rm -rf build/$* || true
+	mkdir -p build/$*
 	docker-compose \
 		-f docker-compose.shared.yml \
 		-f docker-compose.$*.yml \
-		config > deploy/$*/docker-compose.yml
-	docker-compose -f deploy/$*/docker-compose.yml build
-	docker-compose -f deploy/$*/docker-compose.yml up -d
+		config > build/$*/docker-compose.yml
+	docker-compose -f build/$*/docker-compose.yml build
 
-shutdown-%: deploy/%
-	docker-compose -f deploy/$*/docker-compose.yml down -v --remove-orphans
+redeploy-%: shutdown-% build-%
+	docker-compose -f build/$*/docker-compose.yml up -d
+
+deploy-%:
+	docker-compose -f build/$*/docker-compose.yml up -d
+
+shutdown-%:
+	test -f build/$*/docker-compose.yml && \
+		docker-compose -f build/$*/docker-compose.yml down -v --remove-orphans || true

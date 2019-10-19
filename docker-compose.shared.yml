@@ -2,8 +2,14 @@ version: '3.3'
 
 services:
   backend:
-    build: .
+    build:
+      context: .
     depends_on:
       - db
   db:
     image: postgres:12
+    volumes:
+      - woolgatherer-db-data:/var/lib/postgresql/data
+
+volumes:
+  woolgatherer-db-data:

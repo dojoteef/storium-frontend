@@ -1,3 +1,6 @@
+mypy
+black
+pylint
 pyyaml
 pytest
 coverage

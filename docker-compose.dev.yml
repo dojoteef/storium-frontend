@@ -2,6 +2,16 @@ version: '3.3'
 
 services:
   backend:
+    build:
+      args:
+        - PIP_CMD=pip install -e
+    # Can't seem to get gunicorn to reload more than once, so fallback using
+    # uvicorn directly. This is fine since it's only during development. I
+    # imagine it is a bug in gunicorn, but I don't feel like figuring that out
+    # at the moment.
+    command: uvicorn woolgatherer:app --reload --host 0.0.0.0 --port 8000
     ports:
       - "8081:8000"
     image: "woolgatherer:dev"
+    volumes:
+      - .:/var/www/woolgatherer/

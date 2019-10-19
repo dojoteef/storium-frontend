@@ -1,10 +1,10 @@
 """
 Storium database models
 """
-from sqlalchemy import Column, String, Enum
+from pydantic import Json
 from woolgatherer.db.base import DBBaseModel
-from woolgatherer.db.types import JSON
 from woolgatherer.models.stories import StoryStatus
+from woolgatherer.models.utils import Field
 
 
 class Story(DBBaseModel):
@@ -15,8 +15,6 @@ class Story(DBBaseModel):
     https://storium.com/help/export/json/0.9.2
     """
 
-    json: Column = Column(JSON, nullable=False)
-    json_hash: Column = Column(String, unique=True, index=True, nullable=False)
-    status: Column = Column(
-        Enum(StoryStatus), server_default=StoryStatus.pending, nullable=False
-    )
+    story: Json = Field(...)
+    hash: str = Field(..., unique=True, index=True, nullable=False)
+    status: StoryStatus = Field(StoryStatus.pending, server_default=StoryStatus.pending)

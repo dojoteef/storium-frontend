@@ -17,10 +17,9 @@ RUN apk add --no-cache --virtual .build-deps gcc libc-dev postgresql-dev make \
       && ln -s /usr/local/share/woolgatherer/alembic.ini . \
       && ln -s /usr/local/share/woolgatherer/alembic .
 
-
 # Create a user and group that actually run the app, so we aren't running as root
-RUN addgroup -S gwadmin && mkdir /home/gw && adduser -S gw -G gwadmin -h /home/gw \
-      && chown gw:gwadmin /home/gw
+RUN addgroup -S gw && mkdir /home/gw && adduser -S gw -G gw -h /home/gw \
+      && chown gw:gw /home/gw
 
 # Tell docker that all future commands should run as the gw user
 USER gw

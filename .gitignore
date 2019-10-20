@@ -27,4 +27,4 @@ venv
 
 # deployment
 deploy
-woolgatherer.db
+*.db

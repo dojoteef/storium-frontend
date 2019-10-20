@@ -4,10 +4,6 @@
 
 ### Story Processing/Running summarization
 
-* Research the appropriate background task framework to implement arbitrary
-  workers. Here are some possible options:
-  * Redis queue or async redis queue?
-  * Celery?
 * Figure out the appropriate table/column structure to support processing
   stories. Here are some important factors:
   * Support aggregating based on a story's game_pid

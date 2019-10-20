@@ -29,6 +29,7 @@ setup(
     ],
     install_requires=[
         "alembic",
+        "celery",
         "fastapi",
         "uvicorn",
         "gunicorn",

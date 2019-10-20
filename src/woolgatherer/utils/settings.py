@@ -24,6 +24,8 @@ class _DevSettings(BaseSettings):
         description="""The data source name, constructed from the various db fields""",
     )
 
+    broker_url: str = "sqla+sqlite:///task_queue.db"
+
     class Config(object):
         """ Additional configuration for the settings """
 
@@ -40,6 +42,8 @@ class _Settings(_DevSettings):
     db_port: Optional[int] = 5432
     db_name: str = "woolgatherer"
     db_query: Optional[dict] = None
+
+    broker_url: str = "amqp://guest@task_queue"
 
 
 # Forward declare Settings to make mypy happy

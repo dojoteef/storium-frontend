@@ -9,7 +9,7 @@ services:
     # uvicorn directly. This is fine since it's only during development. I
     # imagine it is a bug in gunicorn, but I don't feel like figuring that out
     # at the moment.
-    command: uvicorn woolgatherer:app --reload --host 0.0.0.0 --port 8000
+    command: gw --dev
     ports:
       - "8081:8000"
     image: "woolgatherer:dev"

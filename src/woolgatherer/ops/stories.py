@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 
 from databases import Database
 
+from woolgatherer.tasks import stories
 from woolgatherer.db.utils import json_hash
 from woolgatherer.db_models.storium import Story, StoryStatus
 
@@ -13,18 +14,17 @@ from woolgatherer.db_models.storium import Story, StoryStatus
 async def create_story(db: Database, story_dict: Dict[str, Any]) -> str:
     """ Create a story in the db """
     story_json, story_hash = json_hash(story_dict)
-    story = Story(story=story_json, hash=story_hash)
-    try:
-        await db.execute(query=story.__table__.insert(), values=story.dict())
-    except:
-        pass
+    if not await get_story_status(db, story_hash):
+        logging.debug("Creating story for story_id: %s", story_hash)
+        await Story(story=story_json, hash=story_hash).insert(db)
+        task = stories.process.delay(story_hash, story_dict)
+        logging.debug("Started task %s", task.id)
 
     return story_hash
 
 
 async def get_story_status(db: Database, story_hash: str) -> Optional[StoryStatus]:
     """ Get the current story status """
-    return await db.fetch_val(
-        query=Story.__table__.select().where(Story.__table__.c.hash == story_hash),
-        column="status",
-    )
+    logging.debug("Getting story status for story_id: %s", story_hash)
+    story = await Story.select(db, "status", {"hash": story_hash})
+    return story.status if story else None

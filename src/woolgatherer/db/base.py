@@ -19,14 +19,17 @@ from typing import (
 
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import select, and_
+from sqlalchemy.engine import RowProxy
 from databases import Database
-from pydantic import BaseConfig, BaseModel
+from pydantic import BaseConfig, BaseModel, Json
+from pydantic import fields
 
 from woolgatherer.db.types import TypeMapping, TypeOrder
 from woolgatherer.models.utils import Field
 
 
 __all__ = ["DBBaseModel"]
+
 
 if TYPE_CHECKING:
     DBModel = TypeVar("DBModel", bound="DBBaseModel")
@@ -40,6 +43,27 @@ ExtraFieldMappings: Dict[str, str] = {
     "server_default": "server_default",
     "description": "doc",
 }
+
+
+class Namespace(object):
+    """
+    Simple object for storing attributes. Based on the Namespace from argparse.
+    Pydantic only support attributes, rather than a dict, when using from_orm,
+    so we need to convert the dict to an object with attributes.  Implements
+    equality by attribute names and values.
+    """
+
+    def __init__(self, row: RowProxy):
+        for key, value in row.items():
+            setattr(self, key, value)
+
+    def __eq__(self, other):
+        if not isinstance(other, Namespace):
+            return NotImplemented
+        return vars(self) == vars(other)
+
+    def __contains__(self, key):
+        return key in self.__dict__
 
 
 class DBBaseModel(BaseModel):
@@ -61,10 +85,21 @@ class DBBaseModel(BaseModel):
             else:
                 bases.append(base)
 
+        _orm_fields = {}
         _orm_dict = dict(cls.__dict__)
-        _orm_dict["__fields__"] = deepcopy(_orm_dict["__fields__"])
-        for field in _orm_dict["__fields__"].values():
-            field.required = False
+        _orm_dict["__fields__"] = _orm_fields
+        for name, field in cls.__dict__["__fields__"].items():
+            type_ = dict if field.type_ is Json else field.type_
+            _orm_fields[name] = fields.Field(
+                name=field.name,
+                type_=type_,
+                class_validators=field.class_validators,
+                model_config=field.model_config,
+                default=field.default,
+                required=False,
+                alias=field.alias,
+                schema=field.schema,
+            )
 
         cls.__orm_cls__ = type(f"{cls.__name__}Base", tuple(bases), _orm_dict)
 
@@ -183,8 +218,7 @@ class DBBaseModel(BaseModel):
 
         if where:
             clauses = tuple(table.columns[c] == v for c, v in where.items())
-            clause = and_(*clauses)
-            query = query.where(clause)
+            query = query.where(and_(*clauses))
 
         result = await db.fetch_one(query=query)
-        return cls.from_orm(dict(result)) if result else None
+        return cls.from_orm(Namespace(result)) if result else None

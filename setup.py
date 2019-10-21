@@ -30,6 +30,7 @@ setup(
     install_requires=[
         "alembic",
         "celery",
+        "asgiref",
         "fastapi",
         "uvicorn",
         "gunicorn",

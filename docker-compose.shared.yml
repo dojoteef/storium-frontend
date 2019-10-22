@@ -6,10 +6,13 @@ services:
       context: .
     depends_on:
       - db
+      - queue
   db:
     image: postgres:12
     volumes:
       - woolgatherer-db-data:/var/lib/postgresql/data
+  queue:
+    image: rabbitmq:3
 
 volumes:
   woolgatherer-db-data:

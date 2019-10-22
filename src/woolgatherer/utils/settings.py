@@ -43,7 +43,7 @@ class _Settings(_DevSettings):
     db_name: str = "woolgatherer"
     db_query: Optional[dict] = None
 
-    broker_url: str = "amqp://guest@task_queue"
+    broker_url: str = "amqp://guest@queue"
 
 
 # Forward declare Settings to make mypy happy

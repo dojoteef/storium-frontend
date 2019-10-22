@@ -2,7 +2,7 @@
 Encapsulate SQLAlchemy sessions
 """
 try:
-    from contextlib import asynccontextmanager
+    from contextlib import asynccontextmanager  # type: ignore
 except ImportError:
     from async_generator import asynccontextmanager
 
@@ -33,7 +33,7 @@ async def get_db():
         yield _database
     except:  # pylint: disable=bare-except
         await transaction.rollback()
-    finally:
+    else:
         await transaction.commit()
 
 

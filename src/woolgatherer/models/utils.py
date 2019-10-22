@@ -2,9 +2,13 @@
 Utilities useful for defining models.
 """
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, Union
 
 from pydantic import Schema
+from pydantic import Json as _Json
+
+
+Json = Union[_Json, Dict[str, Any]]
 
 
 class AutoNamedEnum(str, Enum):

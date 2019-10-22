@@ -17,7 +17,7 @@ async def create_story(db: Database, story_dict: Dict[str, Any]) -> str:
     if not await get_story_status(db, story_hash):
         logging.debug("Creating story for story_id: %s", story_hash)
         await Story(story=story_json, hash=story_hash).insert(db)
-        task = stories.process.delay(story_hash, story_dict)
+        task = stories.process.delay(story_hash)
         logging.debug("Started task %s", task.id)
 
     return story_hash

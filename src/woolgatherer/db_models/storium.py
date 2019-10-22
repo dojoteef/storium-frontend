@@ -1,10 +1,9 @@
 """
 Storium database models
 """
-from pydantic import Json
 from woolgatherer.db.base import DBBaseModel
 from woolgatherer.models.stories import StoryStatus
-from woolgatherer.models.utils import Field
+from woolgatherer.models.utils import Field, Json
 
 
 class Story(DBBaseModel):

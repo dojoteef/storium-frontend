@@ -6,6 +6,10 @@ WORKERS="${WORKERS:-1}"
 LOGLEVEL="${LOGLEVEL:-info}"
 
 if [ "$1" = "--dev" ]; then
+  # Can't seem to get gunicorn to reload more than once, so fallback to using
+  # uvicorn directly. This is fine since it's only during development. I
+  # imagine it is a bug in gunicorn, but I don't feel like figuring that out at
+  # the moment.
   uvicorn woolgatherer:app --reload --host $HOST --port $PORT
 else
   gunicorn -k uvicorn.workers.UvicornWorker -b "$HOST:$PORT" woolgatherer:app -w $WORKERS

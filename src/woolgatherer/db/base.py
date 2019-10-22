@@ -1,7 +1,7 @@
 """
 The base class for all SQLAlchemy models
 """
-from copy import deepcopy
+import sys
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     DBModel = TypeVar("DBModel", bound="DBBaseModel")
 
 
-ExtraFieldMappings: Dict[str, str] = {
+_ExtraFieldMappings: Dict[str, str] = {
     "index": "index",
     "unique": "unique",
     "primary_key": "primary_key",
@@ -47,10 +47,10 @@ ExtraFieldMappings: Dict[str, str] = {
 
 class Namespace(object):
     """
-    Simple object for storing attributes. Based on the Namespace from argparse.
-    Pydantic only support attributes, rather than a dict, when using from_orm,
-    so we need to convert the dict to an object with attributes.  Implements
-    equality by attribute names and values.
+    Simple object for storing attributes. Based on the Namespace from argparse. Pydantic
+    only support attributes, rather than a dict, when using from_orm, so we need to
+    convert the dict to an object with attributes.  Implements equality by attribute
+    names and values.
     """
 
     def __init__(self, row: RowProxy):
@@ -73,8 +73,9 @@ class DBBaseModel(BaseModel):
     __orm_cls__: Type["BaseModel"]
     __metadata__: sa.MetaData = sa.MetaData()
 
-    id: Optional[int] = Field(None, primary_key=True, autoincrement=True)
+    id: Optional[int] = Field(..., primary_key=True, autoincrement=True)
 
+    @classmethod
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
 
@@ -85,14 +86,11 @@ class DBBaseModel(BaseModel):
             else:
                 bases.append(base)
 
-        _orm_fields = {}
-        _orm_dict = dict(cls.__dict__)
-        _orm_dict["__fields__"] = _orm_fields
+        _orm_fields: Dict[str, fields.Field] = {}
         for name, field in cls.__dict__["__fields__"].items():
-            type_ = dict if field.type_ is Json else field.type_
             _orm_fields[name] = fields.Field(
                 name=field.name,
-                type_=type_,
+                type_=field.type_,
                 class_validators=field.class_validators,
                 model_config=field.model_config,
                 default=field.default,
@@ -101,7 +99,14 @@ class DBBaseModel(BaseModel):
                 schema=field.schema,
             )
 
-        cls.__orm_cls__ = type(f"{cls.__name__}Base", tuple(bases), _orm_dict)
+        _orm_name = f"{cls.__name__}Base"
+        _orm_dict = dict(cls.__dict__)
+        _orm_dict["__fields__"] = _orm_fields
+
+        _orm_cls = type(_orm_name, tuple(bases), _orm_dict)
+        _module = sys.modules[cls.__module__]
+        setattr(_module, _orm_name, _orm_cls)
+        cls.__orm_cls__ = _orm_cls
 
         columns = []
         for field in cls.__fields__.values():
@@ -117,7 +122,7 @@ class DBBaseModel(BaseModel):
 
             if field.schema:
                 extra = field.schema.extra
-                for source_field, target_field in ExtraFieldMappings.items():
+                for source_field, target_field in _ExtraFieldMappings.items():
                     if source_field in extra:
                         kwargs[target_field] = extra[source_field]
 
@@ -138,6 +143,12 @@ class DBBaseModel(BaseModel):
                         kwargs["nullable"] = True
                         union_args.remove(type(None))
                         base_type_ = union_args.pop()
+                    elif (
+                        len(union_args) == 2
+                        and Json in union_args
+                        and Dict[str, Any] in union_args
+                    ):
+                        base_type_ = Json
                     else:
                         raise AttributeError(
                             "Only Union[<type>] & Union[<type>, None] supported!"
@@ -146,7 +157,7 @@ class DBBaseModel(BaseModel):
                     mapping_args = getattr(field.type_, "__args__")
                     if not issubclass(mapping_args[0], str):
                         raise AttributeError("Mapping key must be a string!")
-                    base_type_ = dict
+                    base_type_ = Json
                 else:
                     # Technically, PostgreSQL supports an array (which could be
                     # specified as a List or Tuple), but only that database does. Since
@@ -189,14 +200,27 @@ class DBBaseModel(BaseModel):
     @classmethod
     def from_orm(cls: Type["DBModel"], obj: Any) -> Any:
         """
-        Overload the baseclass from_orm to use our special base class which
-        removes required for all fields
+        Overload the baseclass from_orm to use our special base class which removes
+        required for all fields
         """
         return cls.__orm_cls__.from_orm(obj)
 
     async def insert(self, db: Database):
-        """ Insert the current model into the db """
-        await db.execute(query=type(self).__table__.insert(), values=self.dict())
+        """
+        Insert the current model into the db. Make sure to only insert values that have
+        actually been set, or defaults if provided.
+        """
+        values = {}
+        for name, field in type(self).__dict__["__fields__"].items():
+            if (
+                name
+                in self.__fields_set__  # pylint:disable=unsupported-membership-test
+            ):
+                values[name] = getattr(self, name)
+            elif not field.allow_none and field.default is not Ellipsis:
+                values[name] = field.default
+
+        await db.execute(query=type(self).__table__.insert(values=values))
 
     @classmethod
     async def select(

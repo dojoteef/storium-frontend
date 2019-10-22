@@ -6,6 +6,10 @@ services:
       context: .
     depends_on:
       - db
+  tasks:
+    command: celery worker -A woolgatherer.tasks -l info -c 1
+    depends_on:
+      - db
       - queue
   db:
     image: postgres:12

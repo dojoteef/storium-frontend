@@ -7,7 +7,7 @@ services:
         - PIP_CMD=pip install -e
     command: gw --dev
     ports:
-      - 8081:8000
+      - 8082:8000
     image: woolgatherer:dev
     volumes:
       - .:/var/www/woolgatherer/

@@ -1,0 +1,9 @@
+version: '3.3'
+
+services:
+  backend:
+    ports:
+      - 8081:8000
+    image: woolgatherer:stage
+  tasks:
+    image: woolgatherer:stage

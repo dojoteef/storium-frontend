@@ -51,11 +51,11 @@ async def create_story(
     db: Database = Depends(get_db),
 ):
     """
-    Use this method to upload a story to the service. You **MUST** upload the story in full before
-    making a request to generate a suggestion. The process of creating a story on the service also
-    involves preprocessing to make it quicker to serve suggestions. Therefore it may make sense to
-    upload stories well in advance of requesting a suggestion. This may help reduce latency in
-    generating a suggestion.
+    Use this method to upload a story to the service. You **MUST** upload the story in
+    full before making a request to generate a suggestion. The process of creating a
+    story on the service also involves preprocessing to make it quicker to serve
+    suggestions. Therefore it may make sense to upload stories well in advance of
+    requesting a suggestion. This may help reduce latency in generating a suggestion.
     """
     story_id = await story_ops.create_story(db, story)
     base_path = request.url.path.rstrip("/create")
@@ -78,7 +78,8 @@ async def get_story_status(
     db: Database = Depends(get_db),
 ):
     """
-    This method can be used to see the status of a Story that is currently being preprocessed.
+    This method can be used to see the status of a Story that is currently being
+    preprocessed.
     """
     status = await story_ops.get_story_status(db, story_id)
     if status is None:

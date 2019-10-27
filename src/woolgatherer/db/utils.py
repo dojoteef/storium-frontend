@@ -2,7 +2,8 @@
 DB utilities
 """
 import json
-from typing import Any, Dict, Tuple, Union
+from datetime import datetime
+from typing import Any, Dict, Tuple
 import hashlib
 from importlib.util import find_spec
 
@@ -12,12 +13,27 @@ def has_postgres() -> bool:
     return find_spec("psycopg2") is not None
 
 
+class JSONEncoder(json.JSONEncoder):
+    """ A custom JSON encoder which handles datetime objects """
+
+    def default(self, o):  # pylint:disable=method-hidden
+        """ Overloaded to support datetime objects """
+        if isinstance(o, datetime):
+            return o.isoformat(" ")
+
+        return super().default(o)
+
+
 def normalized_json_str(json_obj: Dict[str, Any]) -> str:
     """
     Normalize a JSON object by sorting it and removing any extraneous space.
     """
     return json.dumps(
-        json_obj, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+        json_obj,
+        sort_keys=True,
+        cls=JSONEncoder,
+        ensure_ascii=False,
+        separators=(",", ":"),
     )
 
 

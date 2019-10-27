@@ -1,7 +1,6 @@
 """
 The base class for all SQLAlchemy models
 """
-from collections.abc import Sequence
 from typing import (
     Any,
     Dict,
@@ -9,6 +8,7 @@ from typing import (
     Mapping,
     Tuple,
     Set,
+    Sequence,
     Optional,
     Union,
     Type,
@@ -17,17 +17,13 @@ from typing import (
 )
 
 import sqlalchemy as sa
+from sqlalchemy.schema import Constraint
 from sqlalchemy.sql.expression import select, and_
-from sqlalchemy.engine import RowProxy
 from databases import Database
 from pydantic import BaseConfig, BaseModel, Json
-from pydantic import fields
 
-from woolgatherer.db.types import TypeMapping, TypeOrder
+from woolgatherer.db import types
 from woolgatherer.models.utils import Field
-
-
-__all__ = ["DBBaseModel"]
 
 
 if TYPE_CHECKING:
@@ -44,28 +40,29 @@ _ExtraFieldMappings: Dict[str, str] = {
 }
 
 
-class Namespace(object):
-    """
-    Simple object for storing attributes. Based on the Namespace from argparse. Pydantic
-    only support attributes, rather than a dict, when using from_orm, so we need to
-    convert the dict to an object with attributes.  Implements equality by attribute
-    names and values.
-    """
-
-    def __init__(self, row: RowProxy):
-        for key, value in row.items():
-            setattr(self, key, value)
-
-    def __eq__(self, other):
-        if not isinstance(other, Namespace):
-            return NotImplemented
-        return vars(self) == vars(other)
-
-    def __contains__(self, key):
-        return key in self.__dict__
+ModelMetaClass = type(BaseModel)
 
 
-class DBBaseModel(BaseModel):
+class DBModelMetaClass(ModelMetaClass):  # type: ignore
+    """ The meta class for the DB base model """
+
+    def __new__(  # type: ignore
+        mcs: type,
+        name: str,
+        bases: Tuple[type, ...],
+        namespace: Dict[str, Any],
+        constraints: Sequence[Constraint] = tuple(),  # pylint:disable=unused-argument
+    ) -> type:
+        new_type = super().__new__(mcs, name, bases, namespace)  # type: ignore
+        table = getattr(new_type, "__table__", None)
+        if table is not None:
+            for constraint in constraints:
+                table.append_constraint(constraint)
+
+        return new_type
+
+
+class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
     """ The base DB model """
 
     __table__: sa.Table
@@ -74,7 +71,7 @@ class DBBaseModel(BaseModel):
     id: Optional[int] = Field(..., primary_key=True, autoincrement=True)
 
     @classmethod
-    def __init_subclass__(cls) -> None:
+    def __init_subclass__(cls, constraints: Sequence[Constraint] = tuple()) -> None:
         super().__init_subclass__()
 
         bases: List[type] = []
@@ -84,25 +81,9 @@ class DBBaseModel(BaseModel):
             else:
                 bases.append(base)
 
-        _orm_fields: Dict[str, fields.Field] = {}
-        for name, field in cls.__dict__["__fields__"].items():
-            _orm_fields[name] = fields.Field(
-                name=field.name,
-                type_=field.type_,
-                class_validators=field.class_validators,
-                model_config=field.model_config,
-                default=field.default,
-                required=False,
-                alias=field.alias,
-                schema=field.schema,
-            )
-
-        _orm_name = f"{cls.__name__}Base"
-        _orm_dict = dict(cls.__dict__)
-        _orm_dict["__fields__"] = _orm_fields
-
         columns = []
         for field in cls.__fields__.values():
+            foriegn_key = None
             kwargs: Dict[str, Any] = {}
             if field.has_alias:
                 kwargs["key"] = field.alias
@@ -119,6 +100,9 @@ class DBBaseModel(BaseModel):
                     if source_field in extra:
                         kwargs[target_field] = extra[source_field]
 
+                if "foriegn_key" in extra:
+                    foriegn_key = extra["foriegn_key"]
+
             # Need to do different processing if the type is wrapped in a special typing
             # annotation, e.g. Union, Dict, etc.
             base_type_: type = field.type_
@@ -126,26 +110,19 @@ class DBBaseModel(BaseModel):
             if origin:
                 if origin is Union:
                     union_args = set(getattr(field.type_, "__args__"))
+                    union_args.discard(type(None))
+
                     if len(union_args) == 1:
-                        pass
-                    elif (
-                        len(union_args) == 2
-                        and type(None)  # pylint:disable = unidiomatic-typecheck
-                        in union_args
-                    ):
-                        kwargs["nullable"] = True
-                        union_args.remove(type(None))
                         base_type_ = union_args.pop()
-                    elif (
-                        len(union_args) == 2
-                        and Json in union_args
-                        and Dict[str, Any] in union_args
-                    ):
-                        base_type_ = Json
                     else:
-                        raise AttributeError(
-                            "Only Union[<type>] & Union[<type>, None] supported!"
-                        )
+                        union_args.discard(Json)
+                        union_args.discard(Dict[str, Any])
+                        if all(issubclass(t, BaseModel) for t in union_args):
+                            base_type_ = Json
+                            union_args.clear()
+
+                    if union_args:
+                        raise AttributeError("Unsupported annotation type!")
                 elif issubclass(origin, Mapping):
                     mapping_args = getattr(field.type_, "__args__")
                     if not issubclass(mapping_args[0], str):
@@ -163,8 +140,8 @@ class DBBaseModel(BaseModel):
             # Now convert the detected types into SQLAlchemy types
             sa_types: Set[sa.types.TypeEngine] = set()
             for type_ in base_type_.__mro__:
-                if type_ in TypeMapping:
-                    sa_types.add(TypeMapping[type_])
+                if type_ in types.TypeMapping:
+                    sa_types.add(types.TypeMapping[type_])
 
             if not sa_types:
                 raise AttributeError(
@@ -172,22 +149,25 @@ class DBBaseModel(BaseModel):
                 )
 
             sa_type: sa.types.TypeEngine = sorted(
-                list(sa_types), key=lambda t: TypeOrder[t]
+                list(sa_types), key=lambda t: types.TypeOrder[t]
             )[0]
 
             if sa_type is sa.Enum:
                 sa_type = sa.Enum(field.type_)
 
-            columns.append(sa.Column(field.name, sa_type, **kwargs))
+            args = [field.name, sa_type]
+            if foriegn_key:
+                args.append(foriegn_key)
+
+            columns.append(sa.Column(*args, **kwargs))
 
         cls.__table__ = sa.Table(
-            cls.__name__.lower(), DBBaseModel.__metadata__, *columns
+            cls.__name__.lower(), DBBaseModel.__metadata__, *columns, *constraints
         )
 
     class Config(BaseConfig):
         """ Configure the pydantic model """
 
-        orm_mode: bool = True
         keep_untouched: Tuple[type, ...] = (sa.MetaData,)
 
     def db_dict(self, defaults: bool = False):
@@ -203,9 +183,11 @@ class DBBaseModel(BaseModel):
             ):
                 values[name] = getattr(self, name)
             elif defaults and not field.allow_none and field.default is not Ellipsis:
-                values[name] = field.default
+                values[name] = (
+                    field.default() if callable(field.default) else field.default
+                )
 
-        return values
+        return {k: types.to_db_type(v) for k, v in values.items()}
 
     async def insert(self, db: Database):
         """
@@ -252,6 +234,13 @@ class DBBaseModel(BaseModel):
 
         result = await db.fetch_one(query=query)
         return (
-            cls.construct(dict(result.items()), set(result.keys())) if result else None
+            cls.construct(
+                {
+                    k: types.from_db_type(cls.__fields__[k].type_, v)
+                    for k, v in result.items()
+                },
+                set(result.keys()),
+            )
+            if result
+            else None
         )
-

@@ -58,13 +58,12 @@ The command used to find these:
 
 """
 import re
-from datetime import datetime
 from enum import auto
 from typing import List, Union, Optional
 
 from pydantic import BaseModel, UrlStr, ConstrainedStr
 
-from woolgatherer.models.utils import AutoNamedEnum, Field
+from woolgatherer.models.utils import AutoNamedEnum, Field, Datetime, EmptyStr
 
 
 class UnchangedStr(ConstrainedStr):
@@ -207,13 +206,15 @@ class Image(BaseModel):
         description="""Url to image asset, usually to a default stock image unless the
         user uploaded/chose a different one. Can be null when no image present.""",
     )
-    attribution_url: Optional[UrlStr] = Field(
+    attribution_url: Optional[Union[UrlStr, EmptyStr]] = Field(
         None, description="Url to an attributed source."
     )
-    attribution_text: Optional[str] = Field(
+    attribution_text: Optional[Union[str, EmptyStr]] = Field(
         None, description="Description of an attributed source."
     )
-    alt_text: Optional[str] = Field(None, description="Alt text for the image.")
+    alt_text: Optional[Union[str, EmptyStr]] = Field(
+        None, description="Alt text for the image."
+    )
 
 
 class HandCardStack(BaseModel):
@@ -478,7 +479,7 @@ class SceneEntry(BaseModel):
         None, description="Markdown string descrbing the body of the entry if any."
     )
 
-    created_at: datetime = Field(
+    created_at: Datetime = Field(
         ..., description="The time when the scene entry was created."
     )
 

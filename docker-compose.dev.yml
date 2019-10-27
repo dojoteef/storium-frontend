@@ -11,6 +11,8 @@ services:
     image: woolgatherer:dev
     volumes:
       - .:/var/www/woolgatherer/
+    environment:
+      - DEBUG=1
   tasks:
     image: woolgatherer:dev
     volumes:

@@ -21,6 +21,7 @@ else:
 # pylint: enable=ungrouped-imports
 
 JSON = _JSON
+ModelMetaClass = type(BaseModel)
 
 
 class GUID(TypeDecorator):
@@ -111,7 +112,7 @@ def to_db_type(obj: Any) -> Any:
 
 def from_db_type(cls: type, obj: Any) -> Any:
     """ Convert an object to a type acceptable by the database """
-    if issubclass(cls, BaseModel):
+    if type(cls) is ModelMetaClass:
         if isinstance(obj, str):
             return cls(**json.loads(obj))
 

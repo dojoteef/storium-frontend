@@ -40,10 +40,7 @@ _ExtraFieldMappings: Dict[str, str] = {
 }
 
 
-ModelMetaClass = type(BaseModel)
-
-
-class DBModelMetaClass(ModelMetaClass):  # type: ignore
+class DBModelMetaClass(types.ModelMetaClass):  # type: ignore
     """ The meta class for the DB base model """
 
     def __new__(  # type: ignore

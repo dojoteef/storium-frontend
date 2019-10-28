@@ -36,9 +36,9 @@ deploy-%:
 
 shutdown-%:
 	test -f build/$*/docker-compose.yml && \
-		docker-compose -f build/$*/docker-compose.yml down -v --remove-orphans || true
+		docker-compose -f build/$*/docker-compose.yml down --remove-orphans || true
 
-shutdown-prod:
-	# make a specialized shutdown for prod which does not remove volumes
+shutdown-dev:
+	# make a specialized shutdown for dev which removes volumes
 	test -f build/prod/docker-compose.yml && \
-		docker-compose -f build/prod/docker-compose.yml down --remove-orphans || true
+		docker-compose -f build/prod/docker-compose.yml down -v --remove-orphans || true

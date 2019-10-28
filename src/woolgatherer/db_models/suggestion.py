@@ -22,7 +22,7 @@ class Suggestion(DBBaseModel, constraints=[UniqueConstraint("hash", "story_hash"
 
     type: SuggestionType = Field(...)
     hash: str = Field(..., index=True)
-    uuid: UUID = Field(..., index=True)
+    uuid: UUID = Field(..., index=True, unique=True)
     context: SceneEntry = Field(...)
     generated: SceneEntry = Field(...)
     finalized: Optional[SceneEntry] = Field(None)

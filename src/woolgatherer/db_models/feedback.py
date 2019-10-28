@@ -1,6 +1,8 @@
 """
 Feedback database model
 """
+from uuid import UUID
+
 # pylint incorrectly complains about unused import for UniqueConstraint... not sure why
 from sqlalchemy.schema import (  # pylint:disable=unused-import
     ForeignKey,
@@ -18,6 +20,6 @@ class Feedback(DBBaseModel, constraints=[UniqueConstraint("type", "suggestion_id
 
     response: str = Field(...)
     type: FeedbackType = Field(..., index=True)
-    suggestion_id: str = Field(
-        ..., index=True, foriegn_key=ForeignKey("suggestion.hash")
+    suggestion_id: UUID = Field(
+        ..., index=True, foriegn_key=ForeignKey("suggestion.uuid")
     )

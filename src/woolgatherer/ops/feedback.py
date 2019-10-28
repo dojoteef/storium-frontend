@@ -46,7 +46,7 @@ async def submit_feedback_validated(
         await Feedback(
             type=response.type,
             response=response.response,
-            suggestion_id=suggestion.hash,
+            suggestion_id=suggestion.uuid,
         ).insert(db)
 
 

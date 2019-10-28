@@ -24,7 +24,7 @@ setup(
     scripts=["scripts/gw", "scripts/gw-createdb"],
     data_files=[
         ("share/woolgatherer", ["alembic.ini"]),
-        ("share/woolgatherer/alembic", ["alembic/env.py"]),
+        ("share/woolgatherer/alembic", ["alembic/env.py", "alembic/script.py.mako"]),
         ("share/woolgatherer/alembic/versions", glob.glob("alembic/versions/*.py")),
     ],
     install_requires=[

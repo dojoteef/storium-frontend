@@ -28,9 +28,6 @@
   * Look into the possibility of creating a Docker registry to hold the various
     models. Each would be a web service you call into to get a result.
 * Figure out how to include Service Streamer to batch requests to the model
-* Create a table to hold suggestions. Potential columns:
-  * story_hash, suggestion_type, model_used, suggestion, status
-* Need a way to send partially generated suggestions to be stored in the db
 
 
 ## Advanced Functionality
@@ -39,14 +36,6 @@
 * Make the deployment approach be able to support deploying to other machines,
   including my home server, which has two TitanX's
 * Use HMAC to generate the json hashes so that it cannot be easily reversed
-
-
-## Improvements
-
-* Include a staging environment in addition to dev & prod
-* Improve production deploy workflow to reduce chance of losing data.
-  Currently, there is a non-trivial possibilty of losing the production
-  database.
 
 
 ## Documentation

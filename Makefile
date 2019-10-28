@@ -40,5 +40,5 @@ shutdown-%:
 
 shutdown-dev:
 	# make a specialized shutdown for dev which removes volumes
-	test -f build/prod/docker-compose.yml && \
-		docker-compose -f build/prod/docker-compose.yml down -v --remove-orphans || true
+	test -f build/dev/docker-compose.yml && \
+		docker-compose -f build/dev/docker-compose.yml down -v --remove-orphans || true

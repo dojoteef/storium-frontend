@@ -57,7 +57,7 @@ async def create_story(
     suggestions. Therefore it may make sense to upload stories well in advance of
     requesting a suggestion. This may help reduce latency in generating a suggestion.
     """
-    story_id = await story_ops.create_story(db, story)
+    story_id = await story_ops.create_story(story, db=db)
     base_path = request.url.path.rstrip("/create")
     response.headers["Location"] = f"{base_path}/{story_id}/status"
 
@@ -81,7 +81,7 @@ async def get_story_status(
     This method can be used to see the status of a Story that is currently being
     preprocessed.
     """
-    status = await story_ops.get_story_status(db, story_id)
+    status = await story_ops.get_story_status(story_id, db=db)
     if status is None:
         raise HTTPException(HTTP_404_NOT_FOUND, detail="Unknown story")
 

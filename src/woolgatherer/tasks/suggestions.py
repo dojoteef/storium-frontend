@@ -7,7 +7,11 @@ from celery.utils.log import get_task_logger
 
 from woolgatherer.tasks import app
 from woolgatherer.utils.settings import Settings
-from woolgatherer.db_models.storium import Suggestion, SuggestionStatus, SuggestionType
+from woolgatherer.db_models.suggestion import (
+    Suggestion,
+    SuggestionStatus,
+    SuggestionType,
+)
 
 
 logger = get_task_logger(__name__)

@@ -2,6 +2,7 @@
 DB utilities
 """
 import json
+from uuid import UUID
 from datetime import datetime
 from typing import Any, Dict, Tuple
 import hashlib
@@ -49,3 +50,8 @@ def json_hash(json_obj: Dict[str, Any]) -> Tuple[str, str]:
     json_str = normalized_json_str(json_obj)
     hasher.update(json_str.encode("utf-8"))
     return json_str, hasher.hexdigest()
+
+
+def uuid_str(uuid: UUID):
+    """ Return the UUID as a string """
+    return str(uuid).replace("-", "")

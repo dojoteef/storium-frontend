@@ -15,3 +15,6 @@ app.include_router(suggestions.router, prefix="/suggestions", tags=["suggestions
 
 app.add_event_handler("startup", open_connection_pool)
 app.add_event_handler("shutdown", close_connection_pool)
+
+
+# TODO: Add support for gzip/zlib content encoding

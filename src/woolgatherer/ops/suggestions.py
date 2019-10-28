@@ -3,24 +3,35 @@ Operations which can be conducted on suggestions
 """
 import logging
 from uuid import uuid4, UUID
-from typing import Optional, Union
+from functools import singledispatch
+from typing import Optional, Sequence, Tuple, Union
 
 from databases import Database
 
+from woolgatherer.errors import InvalidOperationError
 from woolgatherer.tasks import suggestions
 from woolgatherer.models.storium import SceneEntry
+from woolgatherer.ops import feedback as feedback_ops
+from woolgatherer.models.feedback import FeedbackPrompt, FeedbackResponse
 from woolgatherer.db.utils import json_hash
-from woolgatherer.db_models.storium import Suggestion, SuggestionType
+from woolgatherer.db_models.suggestion import Suggestion, SuggestionType
+from woolgatherer.utils.settings import Settings
 
 
 async def get_or_create_suggestion(
-    db: Database, story_hash: str, context: SceneEntry, suggestion_type: SuggestionType
-) -> Optional[Suggestion]:
+    story_hash: str,
+    context: SceneEntry,
+    suggestion_type: SuggestionType,
+    *,
+    db: Database,
+) -> Tuple[Optional[Suggestion], Sequence[FeedbackPrompt]]:
     """ Create a suggestion. First mark it in the db, then create a task. """
     _, context_hash = json_hash(context.dict())
-    suggestion = await get_suggestion(db, story_hash, context_hash, suggestion_type)
+    suggestion = await get_suggestion(
+        story_hash, context_or_hash=context_hash, suggestion_type=suggestion_type, db=db
+    )
     if suggestion:
-        return suggestion
+        return suggestion, Settings.required_feedback
 
     logging.debug("Creating suggestion for story_id: %s", story_hash)
     suggestion = Suggestion(
@@ -35,14 +46,25 @@ async def get_or_create_suggestion(
     task = suggestions.create.delay(story_hash, suggestion_type)
     logging.debug("Started task %s", task.id)
 
+    return suggestion, Settings.required_feedback
+
+
+@singledispatch
+async def get_suggestion(
+    suggestion_id: UUID, *, db: Database, **kwargs  # pylint:disable=unused-argument
+) -> Optional[Suggestion]:
+    """ Get the current suggestion """
+    logging.debug("Getting suggestion for suggestion_id: %s", suggestion_id)
+    suggestion = await Suggestion.select(db, where={"uuid": suggestion_id})
     return suggestion
 
 
-async def get_suggestion(
-    db: Database,
+async def get_suggestion_with_context(
     story_hash: str,
-    context_or_hash: Union[SceneEntry, str],
+    *,
     suggestion_type: SuggestionType,
+    context_or_hash: Union[SceneEntry, str],
+    db: Database,
 ) -> Optional[Suggestion]:
     """ Get the current suggestion """
     if isinstance(context_or_hash, SceneEntry):
@@ -60,10 +82,30 @@ async def get_suggestion(
     )
 
 
-async def get_suggestion_by_id(
-    db: Database, suggestion_id: UUID
-) -> Optional[Suggestion]:
+# For some reason using 'register' as a decorator is not working properly, but calling
+# it as a function seems to work...
+get_suggestion.register(str, get_suggestion_with_context)
+
+
+async def finalize_suggestion(
+    suggestion_id: UUID,
+    entry: SceneEntry,
+    feedback: Sequence[FeedbackResponse],
+    *,
+    db: Database,
+) -> None:
     """ Get the current suggestion """
-    logging.debug("Getting suggestion for suggestion_id: %s", suggestion_id)
-    suggestion = await Suggestion.select(db, where={"uuid": suggestion_id})
-    return suggestion
+    logging.debug("Finalizing suggestion for suggestion_id: %s", suggestion_id)
+    suggestion = await get_suggestion(suggestion_id, db=db)
+    if not suggestion:
+        raise InvalidOperationError("Unknown suggestion")
+
+    if suggestion.finalized:
+        raise InvalidOperationError("Cannot finalize a suggestion twice")
+
+    await feedback_ops.submit_feedback(suggestion, feedback, db=db)
+
+    suggestion.finalized = entry
+    await suggestion.update(
+        db, include_columns="finalized", where={"uuid": suggestion_id}
+    )

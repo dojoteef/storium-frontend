@@ -1,12 +1,18 @@
 """
 Encapsulate the configuration for woolgatherer
 """
-from typing import Optional
+from typing import Tuple, Optional
 
 from pydantic import BaseSettings, DSN, SecretStr
 
 from woolgatherer.db.utils import has_postgres
 from woolgatherer.models.utils import Field
+from woolgatherer.models.feedback import (
+    FeedbackEntryType,
+    FeedbackType,
+    FeedbackPrompt,
+    FeedbackScale,
+)
 
 
 class _DevSettings(BaseSettings):
@@ -25,6 +31,32 @@ class _DevSettings(BaseSettings):
     )
 
     broker_url: str = "sqla+sqlite:///task_queue.db"
+
+    required_feedback: Tuple[FeedbackPrompt, ...] = (
+        FeedbackPrompt(
+            choices=FeedbackScale,
+            type=FeedbackType.fluency,
+            entry_type=FeedbackEntryType.choice,
+            title="""Please rate the fluency of the suggestion.""",
+        ),
+        FeedbackPrompt(
+            choices=FeedbackScale,
+            type=FeedbackType.relevance,
+            entry_type=FeedbackEntryType.choice,
+            title="""Please rate the relevance of the suggestion.""",
+        ),
+        FeedbackPrompt(
+            choices=FeedbackScale,
+            type=FeedbackType.coherence,
+            entry_type=FeedbackEntryType.choice,
+            title="""Please rate the coherence of the suggestion.""",
+        ),
+        FeedbackPrompt(
+            type=FeedbackType.comments,
+            entry_type=FeedbackEntryType.text,
+            title="""Please provide any additional comments you have about the suggestion.""",
+        ),
+    )
 
     class Config(object):
         """ Additional configuration for the settings """

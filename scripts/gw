@@ -10,7 +10,7 @@ if [ "$1" = "--dev" ]; then
   # uvicorn directly. This is fine since it's only during development. I
   # imagine it is a bug in gunicorn, but I don't feel like figuring that out at
   # the moment.
-  uvicorn woolgatherer:app --reload --host $HOST --port $PORT
+  uvicorn woolgatherer:app --reload --host $HOST --port $PORT --log-level $LOGLEVEL
 else
-  gunicorn -k uvicorn.workers.UvicornWorker -b "$HOST:$PORT" woolgatherer:app -w $WORKERS
+  gunicorn -k uvicorn.workers.UvicornWorker -b "$HOST:$PORT" woolgatherer:app -w $WORKERS --log-level $LOGLEVEL
 fi

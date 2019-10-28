@@ -112,7 +112,7 @@ def to_db_type(obj: Any) -> Any:
 
 def from_db_type(cls: type, obj: Any) -> Any:
     """ Convert an object to a type acceptable by the database """
-    if type(cls) is ModelMetaClass:
+    if type(cls) is ModelMetaClass:  # pylint:disable=unidiomatic-typecheck
         if isinstance(obj, str):
             return cls(**json.loads(obj))
 

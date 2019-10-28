@@ -167,39 +167,81 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
 
         keep_untouched: Tuple[type, ...] = (sa.MetaData,)
 
-    def db_dict(self, defaults: bool = False):
+    def db_dict(
+        self,
+        *,
+        include: Optional[Union[str, Set[str]]] = None,
+        exclude: Optional[Union[str, Set[str]]] = None,
+        defaults: bool = False,
+    ):
         """
         Collect the fields that have been set on the model, optionally including
         defaults if specified.
         """
+        if isinstance(include, str):
+            include = {include}
+
+        if isinstance(exclude, str):
+            exclude = {exclude}
+
+        include = include or set()
+        exclude = exclude or set()
+
+        fields_set: Set[str] = set(self.__fields_set__)
+        include = fields_set.intersection(include) if include else fields_set
+        include = include.difference(exclude)
+
         values = {}
         for name, field in type(self).__dict__["__fields__"].items():
-            if (
-                name
-                in self.__fields_set__  # pylint:disable=unsupported-membership-test
-            ):
+            if name in include:
                 values[name] = getattr(self, name)
-            elif defaults and not field.allow_none and field.default is not Ellipsis:
+            elif (
+                defaults
+                and name not in exclude
+                and not field.allow_none
+                and field.default is not Ellipsis
+            ):
                 values[name] = (
                     field.default() if callable(field.default) else field.default
                 )
 
         return {k: types.to_db_type(v) for k, v in values.items()}
 
-    async def insert(self, db: Database):
+    async def insert(
+        self,
+        db: Database,
+        *,
+        include_columns: Optional[Union[str, Set[str]]] = None,
+        exclude_columns: Optional[Union[str, Set[str]]] = None,
+    ):
         """
         Insert the current model into the db. Make sure to only insert values that have
         actually been set, or defaults if provided.
         """
-        await db.execute(query=type(self).__table__.insert(values=self.db_dict(True)))
+        await db.execute(
+            query=type(self).__table__.insert(
+                values=self.db_dict(
+                    include=include_columns, exclude=exclude_columns, defaults=True
+                )
+            )
+        )
 
-    async def update(self, db: Database, where: Optional[Dict[str, Any]] = None):
+    async def update(
+        self,
+        db: Database,
+        *,
+        include_columns: Optional[Union[str, Set[str]]] = None,
+        exclude_columns: Optional[Union[str, Set[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+    ):
         """
         Insert the current model into the db. Make sure to only insert values that have
         actually been set, or defaults if provided.
         """
         table = type(self).__table__
-        query = table.update(values=self.db_dict())
+        query = table.update(
+            values=self.db_dict(include=include_columns, exclude=exclude_columns)
+        )
 
         if where:
             clauses = tuple(table.columns[c] == v for c, v in where.items())
@@ -211,7 +253,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
     async def select(
         cls: Type["DBModel"],
         db: Database,
-        columns: Optional[Union[str, Sequence]] = None,
+        columns: Optional[Union[str, Sequence[str]]] = None,
         where: Optional[Dict[str, Any]] = None,
     ) -> Optional["DBModel"]:
         """ Generate an insert statement for the type """

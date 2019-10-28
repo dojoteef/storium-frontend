@@ -15,9 +15,11 @@ from woolgatherer.models.storium import SceneEntry
 from woolgatherer.models.feedback import FeedbackPrompt, FeedbackResponse
 from woolgatherer.models.suggestion import SuggestionType, SuggestionStatus
 from woolgatherer.ops import stories as story_ops, suggestions as suggestion_ops
+from woolgatherer.utils.routing import CompressibleRoute
 
 
 router = APIRouter()
+router.route_class = CompressibleRoute
 
 
 class SuggestionCreatedResponse(BaseModel):

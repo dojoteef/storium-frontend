@@ -13,9 +13,11 @@ from woolgatherer.db.session import get_db
 from woolgatherer.models.utils import Field
 from woolgatherer.models.stories import StoryStatus
 from woolgatherer.ops import stories as story_ops
+from woolgatherer.utils.routing import CompressibleRoute
 
 
 router = APIRouter()
+router.route_class = CompressibleRoute
 
 
 class StoryCreatedResponse(BaseModel):

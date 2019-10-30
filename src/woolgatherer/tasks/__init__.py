@@ -2,6 +2,7 @@
 Initialize the celery task queue
 """
 from celery import Celery
+from kombu import serialization
 
 from woolgatherer.utils.settings import Settings
 

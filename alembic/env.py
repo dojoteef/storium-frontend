@@ -6,7 +6,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from woolgatherer.db.base import DBBaseModel
+from woolgatherer.db_models.base import DBBaseModel
 from woolgatherer.utils.settings import Settings
 
 from alembic import context

@@ -8,7 +8,7 @@ from sqlalchemy.schema import (  # pylint:disable=unused-import
     ForeignKey,
     UniqueConstraint,
 )
-from woolgatherer.db.base import DBBaseModel
+from woolgatherer.db_models.base import DBBaseModel
 from woolgatherer.models.feedback import FeedbackType
 from woolgatherer.models.utils import Field
 

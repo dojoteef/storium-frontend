@@ -41,7 +41,7 @@ async def submit_feedback_validated(
     if suggestion.status is not SuggestionStatus.done:
         raise InvalidOperationError("Suggestion has not completed")
 
-    logging.debug("Registering feedback for suggestion_id: %s", suggestion.hash)
+    logging.debug("Registering feedback for suggestion_id: %s", suggestion.context_hash)
     for response in responses:
         await Feedback(
             type=response.type,

@@ -1,0 +1,165 @@
+#!/usr/bin/env python
+"""
+A script which can add and update suggestion generators from the woolgatherer service
+"""
+from argparse import ArgumentParser, Namespace, SUPPRESS
+from enum import auto
+
+from databases import Database
+from asgiref.sync import async_to_sync
+
+from woolgatherer.db_models.generator import Reverie, ReverieStatus
+from woolgatherer.models.suggestion import SuggestionType
+from woolgatherer.models.utils import AutoNamedEnum
+from woolgatherer.utils.settings import Settings
+
+
+class Actions(AutoNamedEnum):
+    """ The valid actions on for this script """
+
+    add = auto()
+    update = auto()
+    query = auto()
+
+
+def add_args(parser: ArgumentParser):
+    """ Flags for adding a new model """
+    parser.add_argument(
+        "name",
+        type=str,
+        help="""A name used to group all models of the same architecture with the same
+        trained parameters.""",
+    )
+    parser.add_argument(
+        "url", type=str, help="The url where you can query for model suggestions"
+    )
+    parser.add_argument(
+        "-t",
+        "--type",
+        type=SuggestionType,
+        choices=tuple(SuggestionType),
+        default=SuggestionType.scene_entry,
+        help="What type of suggestion this model generates",
+    )
+    parser.add_argument(
+        "-s",
+        "--status",
+        type=ReverieStatus,
+        choices=tuple(ReverieStatus),
+        default=ReverieStatus.inactive,
+        help="What type of suggestion this model generates",
+    )
+
+
+def update_args(parser: ArgumentParser):
+    """ Flags for adding a new model """
+    parser.add_argument("id", type=str, help="""The id of the model to update""")
+    parser.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        default=SUPPRESS,
+        help="The url where you can query for model suggestions",
+    )
+    parser.add_argument(
+        "-t",
+        "--type",
+        type=SuggestionType,
+        choices=tuple(SuggestionType),
+        default=SUPPRESS,
+        help="What type of suggestion this model generates",
+    )
+    parser.add_argument(
+        "-s",
+        "--status",
+        type=ReverieStatus,
+        choices=tuple(ReverieStatus),
+        default=SUPPRESS,
+        help="What type of suggestion this model generates",
+    )
+
+
+def query_args(parser: ArgumentParser):
+    """ Flags for adding a new model """
+    parser.add_argument(
+        "-n", "--name", type=str, default=SUPPRESS, help="Query by name"
+    )
+    parser.add_argument(
+        "-t",
+        "--type",
+        type=SuggestionType,
+        choices=tuple(SuggestionType),
+        default=SUPPRESS,
+        help="What type of suggestion this model generates",
+    )
+    parser.add_argument(
+        "-s",
+        "--status",
+        type=ReverieStatus,
+        choices=tuple(ReverieStatus),
+        default=SUPPRESS,
+        help="What type of suggestion this model generates",
+    )
+
+
+def parse_args() -> Namespace:
+    """ Parse the command line arguments """
+    parser = ArgumentParser(
+        description="""Script to add/update suggestion generators from woolgatherer"""
+    )
+    subparsers = parser.add_subparsers(dest="action")
+    add_args(
+        subparsers.add_parser(
+            Actions.add.value, help="Add a suggestion model to the service"
+        )
+    )
+    update_args(
+        subparsers.add_parser(
+            Actions.update.value,
+            help="Update an existing suggestion model on the service",
+        )
+    )
+    query_args(subparsers.add_parser(Actions.query.value, help="Query for models"))
+
+    args = parser.parse_args()
+    if args.action is None:
+        parser.error("must specify command")
+
+    return args
+
+
+async def process_command(args: Namespace) -> None:
+    """ Process the command """
+    async with Database(Settings.dsn) as db:
+        args_dict = {}
+        args_dict.update(vars(args))
+        action = args_dict.pop("action")
+
+        if action == Actions.add:
+            await Reverie(**args_dict).insert(db)
+        elif action == Actions.update:
+            where = {"id": args_dict.pop("id")}
+            if not args_dict:
+                raise ValueError("Must specify at least one field to update")
+
+            generator = Reverie.construct(args_dict, set(args_dict))
+            await generator.update(db, where=where)
+        elif action == Actions.query:
+            for result in await Reverie.select_all(db, where=args_dict):
+                print(result)
+        else:
+            # We specifically do not define "remove" as an action as we want that to be
+            # a high friction action. It would actually require removing all associated
+            # suggestions, otherwise it would violate foreign key constraints in the db,
+            # used for determining which model generated a suggestion.
+            raise ValueError("Unknown action!")
+
+
+def main():
+    """ Main entry-point for the script """
+    args = parse_args()
+    async_to_sync(process_command)(args)
+
+
+if __name__ == "__main__":
+    main()

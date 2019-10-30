@@ -12,7 +12,10 @@ class StoryStatus(AutoNamedEnum):
 
     - **pending**: story is still be preprocessed
     - **ready**: story is ready to generate suggestions
+    - **failed**: the story failed to preprocess; making another call to the create
+      story endpoint will retry the preprocessing
     """
 
     pending = auto()
     ready = auto()
+    failed = auto()

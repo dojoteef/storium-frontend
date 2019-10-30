@@ -9,19 +9,21 @@ from sqlalchemy.schema import (  # pylint:disable=unused-import
     ForeignKey,
     UniqueConstraint,
 )
-from woolgatherer.db.base import DBBaseModel
+from woolgatherer.db_models.base import DBBaseModel
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.models.suggestion import SuggestionStatus, SuggestionType
 from woolgatherer.models.utils import Field
 
 
-class Suggestion(DBBaseModel, constraints=[UniqueConstraint("hash", "story_hash")]):
+class Suggestion(
+    DBBaseModel, constraints=[UniqueConstraint("context_hash", "story_hash")]
+):
     """
     This is the db model for a suggestion.
     """
 
     type: SuggestionType = Field(...)
-    hash: str = Field(..., index=True)
+    context_hash: str = Field(..., index=True)
     uuid: UUID = Field(..., index=True, unique=True)
     context: SceneEntry = Field(...)
     generated: SceneEntry = Field(...)

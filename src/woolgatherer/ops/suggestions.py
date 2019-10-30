@@ -38,9 +38,9 @@ async def get_or_create_suggestion(
         uuid=uuid4(),
         context=context,
         generated=context,  # default to the passed in context
-        hash=context_hash,
         type=suggestion_type,
         story_hash=story_hash,
+        context_hash=context_hash,
     )
     await suggestion.insert(db)
     task = suggestions.create.delay(story_hash, suggestion_type)
@@ -78,7 +78,11 @@ async def get_suggestion_with_context(
 
     return await Suggestion.select(
         db,
-        where={"hash": context_hash, "story_hash": story_hash, "type": suggestion_type},
+        where={
+            "context_hash": context_hash,
+            "story_hash": story_hash,
+            "type": suggestion_type,
+        },
     )
 
 

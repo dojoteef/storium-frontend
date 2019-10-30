@@ -23,7 +23,11 @@ from databases import Database
 from pydantic import BaseConfig, BaseModel, Json
 
 from woolgatherer.db import types
+from woolgatherer.utils import snake_case
 from woolgatherer.models.utils import Field
+
+
+__all__ = ["DBBaseModel"]
 
 
 if TYPE_CHECKING:
@@ -159,7 +163,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
             columns.append(sa.Column(*args, **kwargs))
 
         cls.__table__ = sa.Table(
-            cls.__name__.lower(), DBBaseModel.__metadata__, *columns, *constraints
+            snake_case(cls.__name__), DBBaseModel.__metadata__, *columns, *constraints
         )
 
     class Config(BaseConfig):
@@ -250,9 +254,8 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
         await db.execute(query=query)
 
     @classmethod
-    async def select(
+    def _select_query(
         cls: Type["DBModel"],
-        db: Database,
         columns: Optional[Union[str, Sequence[str]]] = None,
         where: Optional[Dict[str, Any]] = None,
     ) -> Optional["DBModel"]:
@@ -271,15 +274,41 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
             clauses = tuple(table.columns[c] == v for c, v in where.items())
             query = query.where(and_(*clauses))
 
-        result = await db.fetch_one(query=query)
-        return (
-            cls.construct(
-                {
-                    k: types.from_db_type(cls.__fields__[k].type_, v)
-                    for k, v in result.items()
-                },
-                set(result.keys()),
-            )
-            if result
-            else None
+        return query
+
+    @classmethod
+    def db_construct(cls: Type["DBModel"], result) -> "DBModel":
+        """ Construct an object of the class from a query result """
+        return cls.construct(
+            {
+                k: types.from_db_type(cls.__fields__[k].type_, v)
+                for k, v in result.items()
+            },
+            set(result.keys()),
         )
+
+    @classmethod
+    async def select(
+        cls: Type["DBModel"],
+        db: Database,
+        columns: Optional[Union[str, Sequence[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+    ) -> Optional["DBModel"]:
+        """ Generate an insert statement for the type """
+        result = await db.fetch_one(
+            query=cls._select_query(columns=columns, where=where)
+        )
+        return cls.db_construct(result) if result else None
+
+    @classmethod
+    async def select_all(
+        cls: Type["DBModel"],
+        db: Database,
+        columns: Optional[Union[str, Sequence[str]]] = None,
+        where: Optional[Dict[str, Any]] = None,
+    ) -> List["DBModel"]:
+        """ Generate an insert statement for the type """
+        results = await db.fetch_all(
+            query=cls._select_query(columns=columns, where=where)
+        )
+        return [cls.db_construct(result) for result in results]

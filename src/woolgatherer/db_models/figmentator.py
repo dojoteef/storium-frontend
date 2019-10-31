@@ -1,5 +1,13 @@
 """
 A class wrapping our suggestion generation models in the database
+
+The term Figmentator is not quite a portmanteau, but similarly it is a made up word. It
+stems from the word figment, which is a noun meaning an imaginary construct, combined
+with the Latin based suffix: -ator, which itself is a combination of -ate and -or. The
+former (-ate) is a suffix occuring in Latin loanwords, like figment, that can be
+used to form verbs. The latter (-or) is a suffix denoting a condition or property of
+things or persons. In our case it denotes a nonhuman entity that "figmentates", i.e.
+comes up with figments.
 """
 from enum import auto
 from typing import Tuple
@@ -17,7 +25,7 @@ from woolgatherer.models.suggestion import SuggestionType
 from woolgatherer.models.utils import AutoNamedEnum, Field
 
 
-class ReverieStatus(AutoNamedEnum):
+class FigmentatorStatus(AutoNamedEnum):
     """
     An enum denoting the states a suggestion generator can be in. One of:
 
@@ -29,7 +37,7 @@ class ReverieStatus(AutoNamedEnum):
     inactive = auto()
 
 
-class ReverieForStory(
+class FigmentatorForStory(
     DBBaseModel, constraints=[UniqueConstraint("model_id", "story_hash")]
 ):
     """
@@ -40,7 +48,7 @@ class ReverieForStory(
     story_hash: str = Field(..., foreign_key=ForeignKey("story.hash"))
 
 
-class Reverie(DBBaseModel):
+class Figmentator(DBBaseModel):
     """
     This is the db model for a suggestion generator.
     """
@@ -48,9 +56,9 @@ class Reverie(DBBaseModel):
     url: str = Field(..., unique=True)
     name: str = Field(..., index=True)
     type: SuggestionType = Field(...)
-    status: ReverieStatus = Field(ReverieStatus.inactive)
+    status: FigmentatorStatus = Field(FigmentatorStatus.inactive)
 
-    async def preprocess(self, session: ClientSession) -> Tuple[bool, "Reverie"]:
+    async def preprocess(self, session: ClientSession) -> Tuple[bool, "Figmentator"]:
         """ Make a preprocess request """
         try:
             async with session.get(self.url) as response:

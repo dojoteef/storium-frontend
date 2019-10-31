@@ -53,8 +53,9 @@ Empirically discovered nullable fields in the Storium export format:
 "world_card_id"
 
 The command used to find these:
-> find data/ -iname '*.json' -print0 | xargs -0 -n 1 -P 0 jq '[recurse | if type == "object" then
- to_entries[] | select(.value == null) | .key else "_" end] | unique | .[]' | sort | uniq)
+> find data/ -iname '*.json' -print0 | xargs -0 -n 1 -P 0 jq '[recurse | if type ==
+"object" then to_entries[] | select(.value == null) | .key else "_" end] | unique | .[]'
+| sort | uniq)
 
 """
 import re

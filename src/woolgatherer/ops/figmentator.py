@@ -7,7 +7,7 @@ from typing import List
 from databases import Database
 
 from woolgatherer.db.utils import has_postgres
-from woolgatherer.db_models.reverie import Reverie
+from woolgatherer.db_models.figmentator import Figmentator
 
 # Need both clauses: one to statisfy PostgreSQL and the other for SQLite
 if has_postgres():
@@ -28,9 +28,9 @@ WITH
        r.status,
        COUNT(rfs.story_hash) AS story_count
     FROM
-        reverie AS r
+        figmentator AS r
             LEFT JOIN
-        reverie_for_story AS rfs
+        figmentator_for_story AS rfs
             ON r.id = rfs.model_id
     WHERE
         r.status = 'active'
@@ -61,8 +61,8 @@ WHERE
 """
 
 
-async def select_reveries(*, db: Database) -> List[Reverie]:
+async def select_figmentators(*, db: Database) -> List[Figmentator]:
     """ Select one generator per suggestion type """
-    logging.debug("Selecting active reveries")
+    logging.debug("Selecting active figmentators")
     results = await db.fetch_all(LOAD_BALANCE_QUERY)
-    return [Reverie.db_construct(row) for row in results]
+    return [Figmentator.db_construct(row) for row in results]

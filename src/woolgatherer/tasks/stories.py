@@ -10,7 +10,7 @@ from asgiref.sync import async_to_sync
 from celery.utils.log import get_task_logger
 
 from woolgatherer.db_models.storium import Story, StoryStatus
-from woolgatherer.db_models.reverie import Reverie, ReverieForStory
+from woolgatherer.db_models.figmentator import Figmentator, FigmentatorForStory
 from woolgatherer.tasks import app
 from woolgatherer.utils.settings import Settings
 
@@ -18,7 +18,7 @@ from woolgatherer.utils.settings import Settings
 logger = get_task_logger(__name__)
 
 
-async def _process(story_id: str, reveries: List[Reverie]):
+async def _process(story_id: str, figmentators: List[Figmentator]):
     """ Do the actual processing... """
     async with Database(Settings.dsn) as db:
         where = {"hash": story_id}
@@ -31,15 +31,15 @@ async def _process(story_id: str, reveries: List[Reverie]):
 
         async with ClientSession() as session:
             requests = []
-            for reverie in reveries:
-                requests.append(reverie.preprocess(session))
+            for figmentator in figmentators:
+                requests.append(figmentator.preprocess(session))
 
             story.status = StoryStatus.ready
             for result in as_completed(requests):
-                completed, reverie = await result
+                completed, figmentator = await result
                 if completed:
-                    await ReverieForStory(
-                        model_id=reverie.id, story_hash=story_id
+                    await FigmentatorForStory(
+                        model_id=figmentator.id, story_hash=story_id
                     ).insert(db)
                 else:
                     story.status = StoryStatus.failed
@@ -49,6 +49,6 @@ async def _process(story_id: str, reveries: List[Reverie]):
 
 
 @app.task
-def process(story_id: str, reveries: List[Dict[str, Any]]):
+def process(story_id: str, figmentators: List[Dict[str, Any]]):
     """ Preprocess a story """
-    async_to_sync(_process)(story_id, [Reverie(**r) for r in reveries])
+    async_to_sync(_process)(story_id, [Figmentator(**f) for f in figmentators])

@@ -49,7 +49,8 @@ class FeedbackPrompt(BaseModel):
 
     entry_type: FeedbackEntryType = Field(
         ...,
-        description=f"The entry type for the user feedback. {FeedbackEntryType.__doc__}",
+        description=f"""The entry type for the user feedback.
+        {FeedbackEntryType.__doc__}""",
     )
 
     title: str = Field(..., description="The title to display to the user.")
@@ -60,8 +61,10 @@ class FeedbackPrompt(BaseModel):
 
 
 class FeedbackResponse(BaseModel):
-    """ This structure is used to provide both the format of the feedback we require when finalizing
-    a Suggestion. """
+    """
+    This structure is used to provide both the format of the feedback we require when
+    finalizing a Suggestion.
+    """
 
     type: FeedbackType = Field(
         ..., description="The type of feedback requested. {FeedbackType.__doc__}"

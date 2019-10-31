@@ -10,6 +10,7 @@ from starlette.status import HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND, HTTP_400_BAD
 
 from woolgatherer.db.session import get_db
 from woolgatherer.db.utils import uuid_str
+from woolgatherer.db_models.storium import StoryStatus
 from woolgatherer.models.utils import Field
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.models.feedback import FeedbackPrompt, FeedbackResponse
@@ -75,6 +76,9 @@ async def create_suggestion(
     if story_status is None:
         raise HTTPException(HTTP_404_NOT_FOUND, detail="Unknown story")
 
+    if story_status is not StoryStatus.ready:
+        raise HTTPException(HTTP_404_NOT_FOUND, detail="Story data missing")
+
     suggestion, required_feedback = await suggestion_ops.get_or_create_suggestion(
         story_id, context, suggestion_type, db=db
     )
@@ -83,8 +87,8 @@ async def create_suggestion(
         return SuggestionCreatedResponse(
             suggestion_id=uuid_str(suggestion.uuid), required_feedback=required_feedback
         )
-    else:
-        raise HTTPException(HTTP_400_BAD_REQUEST, detail="Create request misspecified")
+
+    raise HTTPException(HTTP_400_BAD_REQUEST, detail="Create request misspecified")
 
 
 @router.get(

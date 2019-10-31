@@ -54,11 +54,12 @@ class _DevSettings(BaseSettings):
         FeedbackPrompt(
             type=FeedbackType.comments,
             entry_type=FeedbackEntryType.text,
-            title="""Please provide any additional comments you have about the suggestion.""",
+            title="""Please provide any additional comments you have about the
+            suggestion.""",
         ),
     )
 
-    class Config(object):
+    class Config:
         """ Additional configuration for the settings """
 
         prefix = "GW_"

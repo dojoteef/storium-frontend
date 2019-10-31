@@ -2,8 +2,6 @@
 Operations which can be conducted on feedback
 """
 import logging
-from uuid import UUID
-from functools import singledispatch
 from typing import Sequence
 
 from databases import Database
@@ -13,21 +11,9 @@ from woolgatherer.db_models.suggestion import Suggestion
 from woolgatherer.errors import InvalidOperationError
 from woolgatherer.models.feedback import FeedbackResponse
 from woolgatherer.models.suggestion import SuggestionStatus
-from woolgatherer.ops import suggestions as suggestion_ops
 
 
-@singledispatch
 async def submit_feedback(
-    suggestion_id: UUID, responses: Sequence[FeedbackResponse], *, db: Database
-) -> None:
-    """
-    Register the feedback for the suggestion. First verifies that the suggestion exists.
-    """
-    suggestion = await suggestion_ops.get_suggestion(suggestion_id, db=db)
-    submit_feedback(suggestion, responses, db=db)
-
-
-async def submit_feedback_validated(
     suggestion: Suggestion, responses: Sequence[FeedbackResponse], *, db: Database
 ) -> None:
     """
@@ -48,8 +34,3 @@ async def submit_feedback_validated(
             response=response.response,
             suggestion_id=suggestion.uuid,
         ).insert(db)
-
-
-# For some reason using 'register' as a decorator is not working properly, but calling
-# it as a function seems to work...
-submit_feedback.register(Suggestion, submit_feedback_validated)

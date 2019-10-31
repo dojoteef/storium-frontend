@@ -8,19 +8,13 @@ from enum import Enum
 from typing import Any, Dict
 import sqlalchemy as sa
 from sqlalchemy.types import TypeDecorator, CHAR
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB as _JSONB
+from sqlalchemy.dialects.sqlite import JSON as _JSON
 
 from pydantic import BaseModel, Json
 from woolgatherer.db.utils import has_postgres
 
-# pylint: disable=ungrouped-imports
-if has_postgres():
-    from sqlalchemy.dialects.postgresql import JSONB as _JSON
-else:
-    from sqlalchemy.dialects.sqlite import JSON as _JSON
-# pylint: enable=ungrouped-imports
-
-JSON = _JSON
+JSON = _JSONB if has_postgres() else _JSON
 ModelMetaClass = type(BaseModel)
 
 
@@ -39,28 +33,33 @@ class GUID(TypeDecorator):
     def load_dialect_impl(self, dialect):
         if dialect.name == "postgresql":
             return dialect.type_descriptor(UUID())
-        else:
-            return dialect.type_descriptor(CHAR(32))
+
+        return dialect.type_descriptor(CHAR(32))
 
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
-        elif dialect.name == "postgresql":
+
+        if dialect.name == "postgresql":
             return str(value)
-        else:
-            if not isinstance(value, uuid.UUID):
-                return "%.32x" % uuid.UUID(value).int
-            else:
-                # hexstring
-                return "%.32x" % value.int
+
+        if not isinstance(value, uuid.UUID):
+            return "%.32x" % uuid.UUID(value).int
+
+        # hexstring
+        return "%.32x" % value.int
 
     def process_result_value(self, value, dialect):
         if value is None:
             return value
-        else:
-            if not isinstance(value, uuid.UUID):
-                value = uuid.UUID(value)
-            return value
+
+        if not isinstance(value, uuid.UUID):
+            value = uuid.UUID(value)
+
+        return value
+
+    def process_literal_param(self, value, dialect):
+        raise NotImplementedError()
 
 
 TypeMapping: Dict[type, sa.types.TypeEngine] = {
@@ -102,12 +101,14 @@ def to_db_type(obj: Any) -> Any:
     """ Convert an object to a type acceptable by the database """
     if isinstance(obj, BaseModel):
         return obj.json()
-    elif isinstance(obj, datetime.datetime):
+
+    if isinstance(obj, datetime.datetime):
         return obj.isoformat(" ")
-    elif isinstance(obj, datetime.date) or isinstance(obj, datetime.time):
+
+    if isinstance(obj, (datetime.date, datetime.time)):
         return obj.isoformat()
-    else:
-        return obj
+
+    return obj
 
 
 def from_db_type(cls: type, obj: Any) -> Any:

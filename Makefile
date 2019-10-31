@@ -12,8 +12,14 @@ venv:
 install: venv
 	. venv/bin/activate; pip install -e .[sqlite]
 
-test: install requirements-dev.txt
-	. venv/bin/activate; pip install -r requirements-dev.txt && coverage run -m pytest -v
+dev-install: install requirements-dev.txt
+	. venv/bin/activate; pip install -r requirements-dev.txt
+
+lint: dev-install
+	. venv/bin/activate; mypy src && pylint src
+
+test: dev-install
+	. venv/bin/activate; coverage run -m pytest -v
 
 clean:
 	rm -rf venv deploy .pytest_cache .activate.sh .mypy_cache

@@ -8,7 +8,7 @@ from enum import auto
 from databases import Database
 from asgiref.sync import async_to_sync
 
-from woolgatherer.db_models.reverie import Reverie, ReverieStatus
+from woolgatherer.db_models.figmentator import Figmentator, FigmentatorStatus
 from woolgatherer.models.suggestion import SuggestionType
 from woolgatherer.models.utils import AutoNamedEnum
 from woolgatherer.utils.settings import Settings
@@ -44,9 +44,9 @@ def add_args(parser: ArgumentParser):
     parser.add_argument(
         "-s",
         "--status",
-        type=ReverieStatus,
-        choices=tuple(ReverieStatus),
-        default=ReverieStatus.inactive,
+        type=FigmentatorStatus,
+        choices=tuple(FigmentatorStatus),
+        default=FigmentatorStatus.inactive,
         help="What type of suggestion this model generates",
     )
 
@@ -72,8 +72,8 @@ def update_args(parser: ArgumentParser):
     parser.add_argument(
         "-s",
         "--status",
-        type=ReverieStatus,
-        choices=tuple(ReverieStatus),
+        type=FigmentatorStatus,
+        choices=tuple(FigmentatorStatus),
         default=SUPPRESS,
         help="What type of suggestion this model generates",
     )
@@ -95,8 +95,8 @@ def query_args(parser: ArgumentParser):
     parser.add_argument(
         "-s",
         "--status",
-        type=ReverieStatus,
-        choices=tuple(ReverieStatus),
+        type=FigmentatorStatus,
+        choices=tuple(FigmentatorStatus),
         default=SUPPRESS,
         help="What type of suggestion this model generates",
     )
@@ -105,18 +105,18 @@ def query_args(parser: ArgumentParser):
 def parse_args() -> Namespace:
     """ Parse the command line arguments """
     parser = ArgumentParser(
-        description="""Script to add/update suggestion reveries from woolgatherer"""
+        description="""Script to add/update figmentator models for woolgatherer"""
     )
     subparsers = parser.add_subparsers(dest="action")
     add_args(
         subparsers.add_parser(
-            Actions.add.value, help="Add a suggestion model to the service"
+            Actions.add.value, help="Add a figmentator model to the service"
         )
     )
     update_args(
         subparsers.add_parser(
             Actions.update.value,
-            help="Update an existing suggestion model on the service",
+            help="Update an existing figmentator model on the service",
         )
     )
     query_args(subparsers.add_parser(Actions.query.value, help="Query for models"))
@@ -136,16 +136,16 @@ async def process_command(args: Namespace) -> None:
         action = args_dict.pop("action")
 
         if action == Actions.add:
-            await Reverie(**args_dict).insert(db)
+            await Figmentator(**args_dict).insert(db)
         elif action == Actions.update:
             where = {"id": args_dict.pop("id")}
             if not args_dict:
                 raise ValueError("Must specify at least one field to update")
 
-            reverie = Reverie.construct(args_dict, set(args_dict))
-            await reverie.update(db, where=where)
+            figmentator = Figmentator.construct(args_dict, set(args_dict))
+            await figmentator.update(db, where=where)
         elif action == Actions.query:
-            for result in await Reverie.select_all(db, where=args_dict):
+            for result in await Figmentator.select_all(db, where=args_dict):
                 print(result)
         else:
             # We specifically do not define "remove" as an action as we want that to be

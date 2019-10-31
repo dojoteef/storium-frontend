@@ -2,9 +2,10 @@
 Operations on suggestion generators
 """
 import logging
-from typing import List
+from typing import List, Tuple
 
 from databases import Database
+from aiohttp import ClientSession, client_exceptions
 
 from woolgatherer.db.utils import has_postgres
 from woolgatherer.db_models.figmentator import Figmentator
@@ -66,3 +67,14 @@ async def select_figmentators(*, db: Database) -> List[Figmentator]:
     logging.debug("Selecting active figmentators")
     results = await db.fetch_all(LOAD_BALANCE_QUERY)
     return [Figmentator.db_construct(row) for row in results]
+
+
+async def preprocess(
+    figmentator: Figmentator, *, session: ClientSession
+) -> Tuple[bool, Figmentator]:
+    """ Make a preprocess request """
+    try:
+        async with session.get(figmentator.url) as response:
+            return response.status == 200, figmentator
+    except client_exceptions.ClientError:
+        return False, figmentator

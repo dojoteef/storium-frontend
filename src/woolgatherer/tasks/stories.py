@@ -11,6 +11,7 @@ from celery.utils.log import get_task_logger
 
 from woolgatherer.db_models.storium import Story, StoryStatus
 from woolgatherer.db_models.figmentator import Figmentator, FigmentatorForStory
+from woolgatherer.ops import figmentator as figmentator_ops
 from woolgatherer.tasks import app
 from woolgatherer.utils.settings import Settings
 
@@ -32,7 +33,9 @@ async def _process(story_id: str, figmentators: List[Figmentator]):
         async with ClientSession() as session:
             requests = []
             for figmentator in figmentators:
-                requests.append(figmentator.preprocess(session))
+                requests.append(
+                    figmentator_ops.preprocess(figmentator, session=session)
+                )
 
             story.status = StoryStatus.ready
             for result in as_completed(requests):

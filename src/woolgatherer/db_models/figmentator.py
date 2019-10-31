@@ -10,9 +10,6 @@ things or persons. In our case it denotes a nonhuman entity that "figmentates", 
 comes up with figments.
 """
 from enum import auto
-from typing import Tuple
-
-from aiohttp import ClientSession, client_exceptions
 
 # pylint incorrectly complains about unused import for UniqueConstraint... not sure why
 from sqlalchemy.schema import (  # pylint:disable=unused-import
@@ -57,11 +54,3 @@ class Figmentator(DBBaseModel):
     name: str = Field(..., index=True)
     type: SuggestionType = Field(...)
     status: FigmentatorStatus = Field(FigmentatorStatus.inactive)
-
-    async def preprocess(self, session: ClientSession) -> Tuple[bool, "Figmentator"]:
-        """ Make a preprocess request """
-        try:
-            async with session.get(self.url) as response:
-                return response.status == 200, self
-        except client_exceptions.ClientError:
-            return False, self

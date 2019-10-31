@@ -53,7 +53,7 @@ def add_args(parser: ArgumentParser):
 
 def update_args(parser: ArgumentParser):
     """ Flags for adding a new model """
-    parser.add_argument("id", type=str, help="""The id of the model to update""")
+    parser.add_argument("id", type=int, help="""The id of the model to update""")
     parser.add_argument(
         "-u",
         "--url",

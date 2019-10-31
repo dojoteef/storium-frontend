@@ -42,3 +42,6 @@ shutdown-dev:
 	# make a specialized shutdown for dev which removes volumes
 	test -f build/dev/docker-compose.yml && \
 		docker-compose -f build/dev/docker-compose.yml down -v --remove-orphans || true
+
+run-%-shell:
+	docker-compose -f build/$*/docker-compose.yml run backend sh

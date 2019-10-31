@@ -4,7 +4,7 @@ A class wrapping our suggestion generation models in the database
 from enum import auto
 from typing import Tuple
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, client_exceptions
 
 # pylint incorrectly complains about unused import for UniqueConstraint... not sure why
 from sqlalchemy.schema import (  # pylint:disable=unused-import
@@ -52,5 +52,8 @@ class Reverie(DBBaseModel):
 
     async def preprocess(self, session: ClientSession) -> Tuple[bool, "Reverie"]:
         """ Make a preprocess request """
-        async with session.get(self.url) as response:
-            return response.status == 200, self
+        try:
+            async with session.get(self.url) as response:
+                return response.status == 200, self
+        except client_exceptions.ClientError:
+            return False, self

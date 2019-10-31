@@ -8,7 +8,7 @@ from enum import auto
 from databases import Database
 from asgiref.sync import async_to_sync
 
-from woolgatherer.db_models.generator import Reverie, ReverieStatus
+from woolgatherer.db_models.reverie import Reverie, ReverieStatus
 from woolgatherer.models.suggestion import SuggestionType
 from woolgatherer.models.utils import AutoNamedEnum
 from woolgatherer.utils.settings import Settings
@@ -105,7 +105,7 @@ def query_args(parser: ArgumentParser):
 def parse_args() -> Namespace:
     """ Parse the command line arguments """
     parser = ArgumentParser(
-        description="""Script to add/update suggestion generators from woolgatherer"""
+        description="""Script to add/update suggestion reveries from woolgatherer"""
     )
     subparsers = parser.add_subparsers(dest="action")
     add_args(
@@ -142,8 +142,8 @@ async def process_command(args: Namespace) -> None:
             if not args_dict:
                 raise ValueError("Must specify at least one field to update")
 
-            generator = Reverie.construct(args_dict, set(args_dict))
-            await generator.update(db, where=where)
+            reverie = Reverie.construct(args_dict, set(args_dict))
+            await reverie.update(db, where=where)
         elif action == Actions.query:
             for result in await Reverie.select_all(db, where=args_dict):
                 print(result)

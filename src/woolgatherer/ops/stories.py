@@ -10,7 +10,7 @@ from woolgatherer.db_models.storium import Story, StoryStatus
 from woolgatherer.db.utils import json_hash
 from woolgatherer.errors import InsufficientCapacityError
 from woolgatherer.tasks import stories
-from woolgatherer.ops import generator as generator_ops
+from woolgatherer.ops import reverie as reverie_ops
 
 
 async def create_story(story_dict: Dict[str, Any], *, db: Database) -> str:
@@ -23,8 +23,8 @@ async def create_story(story_dict: Dict[str, Any], *, db: Database) -> str:
         # acknowledging we have created the story. Otherwise we might not be able to
         # fulfill the suggestion generation request. Better to error out early, rather
         # than wait until the subsequent request to generate a suggestion.
-        generators = await generator_ops.select_reveries(db=db)
-        if not generators:
+        reveries = await reverie_ops.select_reveries(db=db)
+        if not reveries:
             raise InsufficientCapacityError("No preprocessors available")
 
         story = Story(story=story_json, hash=story_hash, status=StoryStatus.pending)
@@ -37,7 +37,7 @@ async def create_story(story_dict: Dict[str, Any], *, db: Database) -> str:
             )
             await story.update(db, where={"hash": story_hash})
 
-        task = stories.process.delay(story_hash, [g.dict() for g in generators])
+        task = stories.process.delay(story_hash, [r.dict() for r in reveries])
         logging.debug("Started task %s", task.id)
 
     return story_hash

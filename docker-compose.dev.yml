@@ -16,5 +16,7 @@ services:
       - LOGLEVEL=debug
   tasks:
     image: woolgatherer:dev
+    environment:
+      - LOGLEVEL=debug
     volumes:
       - .:/var/www/woolgatherer/

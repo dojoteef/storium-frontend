@@ -55,6 +55,10 @@ class Datetime(str):
     @classmethod
     def validate(cls, value) -> datetime:
         """ Validate/parse the datetime """
+        if isinstance(value, datetime):
+            # It's already a datetime!
+            return value
+
         if not isinstance(value, str):
             raise ValueError(f"string: str expected not {type(value)}")
 

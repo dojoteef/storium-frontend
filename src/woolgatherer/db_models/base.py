@@ -23,6 +23,7 @@ from databases import Database
 from pydantic import BaseConfig, BaseModel, Json
 
 from woolgatherer.db import types
+from woolgatherer.errors import InvalidOperationError
 from woolgatherer.utils import snake_case
 from woolgatherer.models.utils import Field
 
@@ -250,6 +251,12 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
         if where:
             clauses = tuple(table.columns[c] == v for c, v in where.items())
             query = query.where(and_(*clauses))
+        elif self.id is not None:
+            query = query.where(table.columns["id"] == self.id)
+        else:
+            raise InvalidOperationError(
+                f"Cowardly refusing to update all {type(self).__name__}"
+            )
 
         await db.execute(query=query)
 

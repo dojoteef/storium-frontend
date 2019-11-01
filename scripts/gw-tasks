@@ -1,0 +1,4 @@
+#!/bin/sh
+LOGLEVEL="${LOGLEVEL:-info}"
+
+celery worker -A woolgatherer.tasks -l $LOGLEVEL --autoscale=12,3

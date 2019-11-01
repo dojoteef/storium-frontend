@@ -21,7 +21,12 @@ setup(
     python_requires=">=3.6",
     package_dir={"": "src"},
     packages=find_packages("src"),
-    scripts=["scripts/gw", "scripts/gw-createdb", "scripts/gw-model"],
+    scripts=[
+        "scripts/gw",
+        "scripts/gw-model",
+        "scripts/gw-tasks",
+        "scripts/gw-createdb",
+    ],
     data_files=[
         ("share/woolgatherer", ["alembic.ini"]),
         ("share/woolgatherer/alembic", ["alembic/env.py", "alembic/script.py.mako"]),

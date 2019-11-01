@@ -32,9 +32,10 @@ async def _process(story_id: str, figmentators: List[Figmentator]):
 
         async with ClientSession() as session:
             requests = []
+            context = {"story_id": story.hash, "story": story.story}
             for figmentator in figmentators:
                 requests.append(
-                    figmentator_ops.preprocess(figmentator, session=session)
+                    figmentator_ops.preprocess(context, figmentator, session=session)
                 )
 
             story.status = StoryStatus.ready

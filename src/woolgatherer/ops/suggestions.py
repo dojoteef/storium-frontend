@@ -43,7 +43,7 @@ async def get_or_create_suggestion(
         context_hash=context_hash,
     )
     await suggestion.insert(db)
-    task = suggestions.create.delay(story_hash, suggestion_type)
+    task = suggestions.create.delay(story_hash, context_hash, suggestion_type)
     logging.debug("Started task %s", task.id)
 
     return suggestion, Settings.required_feedback

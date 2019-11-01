@@ -16,7 +16,7 @@ from woolgatherer.models.utils import Field
 
 
 class Suggestion(
-    DBBaseModel, constraints=[UniqueConstraint("context_hash", "story_hash")]
+    DBBaseModel, constraints=[UniqueConstraint("context_hash", "story_hash", "type")]
 ):
     """
     This is the db model for a suggestion.

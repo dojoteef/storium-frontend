@@ -7,7 +7,7 @@ services:
     depends_on:
       - db
   tasks:
-    command: celery worker -A woolgatherer.tasks -l info -c 1
+    command: gw-tasks
     depends_on:
       - db
       - queue

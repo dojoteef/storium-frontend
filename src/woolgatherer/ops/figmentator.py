@@ -2,7 +2,7 @@
 Operations on suggestion generators
 """
 import logging
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from databases import Database
 from aiohttp import ClientSession, client_exceptions
@@ -70,11 +70,28 @@ async def select_figmentators(*, db: Database) -> List[Figmentator]:
 
 
 async def preprocess(
-    figmentator: Figmentator, *, session: ClientSession
+    context: Dict[str, Any], figmentator: Figmentator, *, session: ClientSession
 ) -> Tuple[bool, Figmentator]:
     """ Make a preprocess request """
     try:
-        async with session.get(figmentator.url) as response:
+        async with session.post(figmentator.url, json=context) as response:
             return response.status == 200, figmentator
     except client_exceptions.ClientError:
         return False, figmentator
+
+
+async def figmentate(
+    context: Dict[str, Any], figmentator: Figmentator, *, session: ClientSession
+) -> Tuple[int, Dict[str, Any]]:
+    """ Make a preprocess request """
+    try:
+        # TODO: Specify a range in the header
+        async with session.post(figmentator.url, json=context) as response:
+            return response.status, await response.json()
+    except client_exceptions.ClientResponseError as cre:
+        return cre.status, context
+    except (
+        client_exceptions.ClientConnectionError,
+        client_exceptions.ClientPayloadError,
+    ):
+        return 503, context

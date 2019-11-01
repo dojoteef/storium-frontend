@@ -9,3 +9,7 @@ class InvalidOperationError(RuntimeError):
 
 class InsufficientCapacityError(RuntimeError):
     """ Do not have the capacity to complete a requested operation """
+
+
+class ProcessingError(ValueError):
+    """ There was some error in figment generation """

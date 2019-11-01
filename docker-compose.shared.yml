@@ -12,11 +12,11 @@ services:
       - db
       - queue
   db:
-    image: postgres:12
+    image: postgres:12-alpine
     volumes:
       - woolgatherer-db-data:/var/lib/postgresql/data
   queue:
-    image: rabbitmq:3
+    image: rabbitmq:3-alpine
 
 volumes:
   woolgatherer-db-data:

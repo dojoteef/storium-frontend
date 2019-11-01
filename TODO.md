@@ -2,33 +2,7 @@
 
 ## Required Functionality
 
-### Story Processing/Running summarization
-
-* Figure out the appropriate table/column structure to support processing
-  stories. Here are some important factors:
-  * Support aggregating based on a story's game_pid
-  * Start with just scene entries, but might need to break out by challenges,
-    cards, and characters as well
-  * Easy way to determine what new text to preprocess (run summarization on)
-  * Need to be able to support selecting last N entries in chronological order
-  * Possible columns: json, hash, status, entry_number, result
-    * status should indicate whether preprocessing is complete
-    * result holds the output of the preprocessing
-    * entry_number should define a total ordering across scenes, but should not
-      be unique, in case it is revised and we have two different hashes for the
-      same entry
-* Implement basic task framework and execution
-
-
-### Generating suggestions
-
-* Figure out best way to integrate external code and models into the build and
-  deployment setup. Want to isolate components such that you can easily pull
-  the latest trained model and code.
-  * Look into the possibility of creating a Docker registry to hold the various
-    models. Each would be a web service you call into to get a result.
-* Figure out how to include Service Streamer to batch requests to the model
-
+* Install error handlers for the exceptions I raise
 
 ## Advanced Functionality
 

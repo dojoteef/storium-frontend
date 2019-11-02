@@ -62,7 +62,7 @@ class _DevSettings(BaseSettings):
     class Config:
         """ Additional configuration for the settings """
 
-        prefix = "GW_"
+        env_prefix = "GW_"
 
 
 class _Settings(_DevSettings):

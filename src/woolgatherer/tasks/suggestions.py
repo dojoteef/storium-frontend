@@ -56,11 +56,7 @@ async def _create(story_id: str, context_hash: str, suggestion_type: SuggestionT
         await suggestion.update(db)
 
         figmentate.delay(
-            {
-                "story_id": story_id,
-                "type": suggestion_type,
-                "entry": suggestion.generated.dict(),
-            },
+            {"story_id": story_id, "entry": suggestion.generated.dict()},
             suggestion.dict(),
             figmentator.dict(),
         )
@@ -70,14 +66,14 @@ async def _figmentate(
     context: Dict[str, Any], suggestion: Suggestion, figmentator: Figmentator
 ):
     async with ClientSession() as session:
-        status, context = await figmentator_ops.figmentate(
+        status, entry = await figmentator_ops.figmentate(
             context, figmentator, session=session
         )
         logger.debug("Received figmentator response (status=%s)", status)
-        if status >= 200 and status < 300:
-            async with Database(Settings.dsn) as db:
+        async with Database(Settings.dsn) as db:
+            if status >= 200 and status < 300:
                 try:
-                    suggestion.generated = SceneEntry(**context.get("entry", {}))
+                    suggestion.generated = SceneEntry(**entry)
                 except ValidationError:
                     raise ProcessingError(
                         "Invalid suggestion received from figmentator!"
@@ -86,10 +82,17 @@ async def _figmentate(
                 suggestion.status = SuggestionStatus.done
                 await suggestion.update(db)
 
-        if status == 206:
-            # This indicates we received a partial result, so we need to queue up
-            # another task in order to get the remaining values.
-            figmentate.delay(context, suggestion.dict(), figmentator.dict())
+                if status == 206:
+                    # This indicates we received a partial result, so we need to queue
+                    # up another task in order finish generating the suggestion.
+                    figmentate.delay(
+                        {"entry": entry, **context},
+                        suggestion.dict(),
+                        figmentator.dict(),
+                    )
+            else:
+                suggestion.status = SuggestionStatus.failed
+                await suggestion.update(db)
 
 
 @app.task

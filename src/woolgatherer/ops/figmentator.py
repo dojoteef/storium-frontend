@@ -4,6 +4,7 @@ Operations on suggestion generators
 import logging
 from typing import Any, Dict, List, Tuple
 
+from yarl import URL
 from databases import Database
 from aiohttp import ClientSession, client_exceptions
 
@@ -74,7 +75,8 @@ async def preprocess(
 ) -> Tuple[bool, Figmentator]:
     """ Make a preprocess request """
     try:
-        async with session.post(figmentator.url, json=context) as response:
+        url = URL(figmentator.url)
+        async with session.post(url / "story/snapshot", json=context) as response:
             return response.status == 200, figmentator
     except client_exceptions.ClientError:
         return False, figmentator
@@ -86,12 +88,13 @@ async def figmentate(
     """ Make a preprocess request """
     try:
         # TODO: Specify a range in the header
-        async with session.post(figmentator.url, json=context) as response:
+        url = URL(figmentator.url)
+        async with session.post(url / "figment/new", json=context) as response:
             return response.status, await response.json()
     except client_exceptions.ClientResponseError as cre:
-        return cre.status, context
+        return cre.status, context.get("entry", {})
     except (
         client_exceptions.ClientConnectionError,
         client_exceptions.ClientPayloadError,
     ):
-        return 503, context
+        return 503, context.get("entry", {})

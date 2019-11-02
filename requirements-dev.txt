@@ -1,3 +1,4 @@
+jedi
 mypy
 black
 pylint

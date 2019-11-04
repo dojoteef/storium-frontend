@@ -3,6 +3,7 @@ DB utilities
 """
 import json
 from uuid import UUID
+from functools import partial
 from datetime import datetime
 from typing import Any, Dict, Tuple
 import hashlib
@@ -25,17 +26,14 @@ class JSONEncoder(json.JSONEncoder):
         return super().default(o)
 
 
+json_dumps = partial(json.dumps, cls=JSONEncoder, separators=(",", ":"))
+
+
 def normalized_json_str(json_obj: Dict[str, Any]) -> str:
     """
     Normalize a JSON object by sorting it and removing any extraneous space.
     """
-    return json.dumps(
-        json_obj,
-        sort_keys=True,
-        cls=JSONEncoder,
-        ensure_ascii=False,
-        separators=(",", ":"),
-    )
+    return json_dumps(json_obj, sort_keys=True, ensure_ascii=False)
 
 
 def json_hash(json_obj: Dict[str, Any]) -> Tuple[str, str]:

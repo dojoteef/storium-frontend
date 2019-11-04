@@ -35,19 +35,19 @@ build-%: src docker-compose.shared.yml docker-compose.%.yml
 	docker-compose -f build/$*/docker-compose.yml build
 
 redeploy-%: shutdown-% build-%
-	docker-compose -f build/$*/docker-compose.yml up -d
+	docker-compose -p woolgatherer_$* -f build/$*/docker-compose.yml up -d
 
 deploy-%:
-	docker-compose -f build/$*/docker-compose.yml up -d
+	docker-compose -p woolgatherer_$* -f build/$*/docker-compose.yml up -d
 
 shutdown-%:
 	test -f build/$*/docker-compose.yml && \
-		docker-compose -f build/$*/docker-compose.yml down --remove-orphans || true
+		docker-compose -p woolgatherer_$* -f build/$*/docker-compose.yml down --remove-orphans || true
 
 shutdown-dev:
 	# make a specialized shutdown for dev which removes volumes
 	test -f build/dev/docker-compose.yml && \
-		docker-compose -f build/dev/docker-compose.yml down -v --remove-orphans || true
+		docker-compose -p woolgatherer_dev -f build/dev/docker-compose.yml down -v --remove-orphans || true
 
 run-%-shell:
-	docker-compose -f build/$*/docker-compose.yml run backend sh
+	docker-compose -p woolgatherer_$* -f build/$*/docker-compose.yml run backend sh

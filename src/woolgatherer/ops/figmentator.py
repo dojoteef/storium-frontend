@@ -10,6 +10,7 @@ from aiohttp import ClientSession, client_exceptions
 
 from woolgatherer.db.utils import has_postgres
 from woolgatherer.db_models.figmentator import Figmentator
+from woolgatherer.db_models.suggestion import Suggestion
 
 # Need both clauses: one to statisfy PostgreSQL and the other for SQLite
 if has_postgres():
@@ -83,18 +84,23 @@ async def preprocess(
 
 
 async def figmentate(
-    context: Dict[str, Any], figmentator: Figmentator, *, session: ClientSession
+    suggestion: Suggestion, figmentator: Figmentator, *, session: ClientSession
 ) -> Tuple[int, Dict[str, Any]]:
     """ Make a preprocess request """
     try:
         # TODO: Specify a range in the header
+        # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range
         url = URL(figmentator.url)
-        async with session.post(url / "figment/new", json=context) as response:
+        url /= f"figment/{suggestion.story_hash}/new"
+        async with session.post(
+            url.with_query(suggestion_type=suggestion.type.value),
+            json=suggestion.generated.dict(),
+        ) as response:
             return response.status, await response.json()
     except client_exceptions.ClientResponseError as cre:
-        return cre.status, context.get("entry", {})
+        return cre.status, suggestion.generated.dict()
     except (
         client_exceptions.ClientConnectionError,
         client_exceptions.ClientPayloadError,
     ):
-        return 503, context.get("entry", {})
+        return 503, suggestion.generated.dict()

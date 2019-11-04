@@ -21,6 +21,7 @@ from woolgatherer.tasks import app
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.ops import figmentator as figmentator_ops
 from woolgatherer.utils.settings import Settings
+from woolgatherer.db.utils import json_dumps
 
 
 logger = get_task_logger(__name__)
@@ -55,19 +56,13 @@ async def _create(story_id: str, context_hash: str, suggestion_type: SuggestionT
         suggestion.status = SuggestionStatus.executing
         await suggestion.update(db)
 
-        figmentate.delay(
-            {"story_id": story_id, "entry": suggestion.generated.dict()},
-            suggestion.dict(),
-            figmentator.dict(),
-        )
+        figmentate.delay(suggestion.dict(), figmentator.dict())
 
 
-async def _figmentate(
-    context: Dict[str, Any], suggestion: Suggestion, figmentator: Figmentator
-):
-    async with ClientSession() as session:
+async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
+    async with ClientSession(json_serialize=json_dumps) as session:
         status, entry = await figmentator_ops.figmentate(
-            context, figmentator, session=session
+            suggestion, figmentator, session=session
         )
         logger.debug("Received figmentator response (status=%s)", status)
         async with Database(Settings.dsn) as db:
@@ -85,12 +80,13 @@ async def _figmentate(
                 if status == 206:
                     # This indicates we received a partial result, so we need to queue
                     # up another task in order finish generating the suggestion.
-                    figmentate.delay(
-                        {"entry": entry, **context},
-                        suggestion.dict(),
-                        figmentator.dict(),
-                    )
+                    figmentate.delay(suggestion.dict(), figmentator.dict())
             else:
+                logger.error(
+                    "Figmentator query failed (status=%s, reponse={%s})",
+                    status,
+                    str(entry),
+                )
                 suggestion.status = SuggestionStatus.failed
                 await suggestion.update(db)
 
@@ -102,10 +98,6 @@ def create(story_id: str, context_hash: str, suggestion_type: SuggestionType):
 
 
 @app.task
-def figmentate(
-    context: Dict[str, Any], suggestion: Dict[str, Any], figmentator: Dict[str, Any]
-):
+def figmentate(suggestion: Dict[str, Any], figmentator: Dict[str, Any]):
     """ Generate the figment """
-    async_to_sync(_figmentate)(
-        context, Suggestion(**suggestion), Figmentator(**figmentator)
-    )
+    async_to_sync(_figmentate)(Suggestion(**suggestion), Figmentator(**figmentator))

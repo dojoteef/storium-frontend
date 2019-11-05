@@ -2,8 +2,10 @@
 Data models for suggestions.
 """
 from enum import auto
+from pydantic import BaseModel
 
-from woolgatherer.models.utils import AutoNamedEnum
+from woolgatherer.models.range import RangeUnits
+from woolgatherer.models.utils import AutoNamedEnum, Field
 
 
 class SuggestionStatus(AutoNamedEnum):
@@ -29,3 +31,23 @@ class SuggestionType(AutoNamedEnum):
     """
 
     scene_entry = auto()
+
+
+class SceneEntryParameters(BaseModel):
+    """ Parameters that guide SceneEntry generation """
+
+    units: RangeUnits = Field(
+        RangeUnits.words, description="The type of units to to measure length in."
+    )
+
+    max_length: int = Field(
+        250, description="Maximum length in units for a scene entry"
+    )
+
+    chunk_size: int = Field(
+        25,
+        description="""
+How many units to generate per request to a figmentator. This is used to allow streaming
+the generated suggestion.
+        """,
+    )

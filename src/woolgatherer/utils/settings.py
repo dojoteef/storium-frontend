@@ -13,6 +13,7 @@ from woolgatherer.models.feedback import (
     FeedbackPrompt,
     FeedbackScale,
 )
+from woolgatherer.models.suggestion import SceneEntryParameters
 
 
 class _DevSettings(BaseSettings):
@@ -31,6 +32,9 @@ class _DevSettings(BaseSettings):
     )
 
     broker_url: str = "sqla+sqlite:///task_queue.db"
+    scene_entry_parameters: SceneEntryParameters = Field(
+        SceneEntryParameters(), description=SceneEntryParameters.__doc__
+    )
 
     required_feedback: Tuple[FeedbackPrompt, ...] = (
         FeedbackPrompt(

@@ -74,9 +74,10 @@ async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
                         "Invalid suggestion received from figmentator!"
                     )
 
-                suggestion.status = SuggestionStatus.done
-                await suggestion.update(db)
+                if status == 200:
+                    suggestion.status = SuggestionStatus.done
 
+                await suggestion.update(db)
                 if status == 206:
                     # This indicates we received a partial result, so we need to queue
                     # up another task in order finish generating the suggestion.

@@ -7,8 +7,6 @@
 ## Advanced Functionality
 
 * Support HTTPS and/or HMAC authentication to use the API
-* Make the deployment approach be able to support deploying to other machines,
-  including my home server, which has two TitanX's
 * Use HMAC to generate the json hashes so that it cannot be easily reversed
 
 

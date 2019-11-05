@@ -22,7 +22,7 @@ test: dev-install
 	. venv/bin/activate; coverage run -m pytest -v
 
 clean:
-	rm -rf venv build .pytest_cache .activate.sh .mypy_cache
+	rm -rf venv .pytest_cache .activate.sh .mypy_cache
 	find . -iname "*.pyc" -delete
 
 build-%: src docker-compose.shared.yml docker-compose.%.yml

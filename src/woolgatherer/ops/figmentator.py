@@ -118,6 +118,7 @@ def compute_range(entry: SceneEntry) -> Range:
     if remaining > 0:
         end = min(remaining, Settings.scene_entry_parameters.chunk_size)
         start = entry_len if end == remaining else None
+        end = start + remaining if start else end
 
         ranges.append(Subrange(start=start, end=end))
 

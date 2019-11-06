@@ -11,8 +11,7 @@ from databases import Database
 from woolgatherer.errors import InvalidOperationError
 from woolgatherer.tasks import suggestions
 from woolgatherer.models.storium import SceneEntry
-from woolgatherer.ops import feedback as feedback_ops
-from woolgatherer.models.feedback import FeedbackPrompt, FeedbackResponse
+from woolgatherer.models.feedback import FeedbackPrompt
 from woolgatherer.db.utils import json_hash
 from woolgatherer.db_models.suggestion import Suggestion, SuggestionType
 from woolgatherer.utils.settings import Settings
@@ -92,11 +91,7 @@ get_suggestion.register(str, get_suggestion_with_context)
 
 
 async def finalize_suggestion(
-    suggestion_id: UUID,
-    entry: SceneEntry,
-    feedback: Sequence[FeedbackResponse],
-    *,
-    db: Database,
+    suggestion_id: UUID, entry: SceneEntry, *, db: Database
 ) -> None:
     """ Get the current suggestion """
     logging.debug("Finalizing suggestion for suggestion_id: %s", suggestion_id)
@@ -106,8 +101,6 @@ async def finalize_suggestion(
 
     if suggestion.finalized:
         raise InvalidOperationError("Cannot finalize a suggestion twice")
-
-    await feedback_ops.submit_feedback(suggestion, feedback, db=db)
 
     suggestion.finalized = entry
     await suggestion.update(

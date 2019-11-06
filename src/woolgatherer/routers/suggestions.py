@@ -15,7 +15,11 @@ from woolgatherer.models.utils import Field
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.models.feedback import FeedbackPrompt, FeedbackResponse
 from woolgatherer.models.suggestion import SuggestionType, SuggestionStatus
-from woolgatherer.ops import stories as story_ops, suggestions as suggestion_ops
+from woolgatherer.ops import (
+    feedback as feedback_ops,
+    stories as story_ops,
+    suggestions as suggestion_ops,
+)
 from woolgatherer.utils.routing import CompressibleRoute
 
 
@@ -120,22 +124,35 @@ async def get_suggestion(
     return {"suggestion": suggestion.generated, "status": suggestion.status}
 
 
-@router.post("/{suggestion_id}/finalize", summary="Finalize a Suggestion")
-async def finalize_suggestion(
+@router.post("/{suggestion_id}/feedback", summary="Submit feedback")
+async def submit_feedback(
     suggestion_id: str = Path(
         ..., description="""The suggestion_id for the suggestion the user evaluated."""
     ),
-    entry: SceneEntry = Body(..., description="""The move that the user submitted."""),
     feedback: List[FeedbackResponse] = Body(
         ..., description="""The responses to the required feedback."""
     ),
     db: Database = Depends(get_db),
 ):
     """
+    Submit user feedback for a suggestion. After providing a Suggestion to the
+    user, this endpoint allows for providing  any feedback requested when the
+    Suggestion was generated.
+    """
+    await feedback_ops.submit_feedback(UUID(suggestion_id), feedback, db=db)
+
+
+@router.post("/{suggestion_id}/finalize", summary="Finalize a Suggestion")
+async def finalize_suggestion(
+    suggestion_id: str = Path(
+        ..., description="""The suggestion_id for the suggestion the user evaluated."""
+    ),
+    entry: SceneEntry = Body(..., description="""The move that the user submitted."""),
+    db: Database = Depends(get_db),
+):
+    """
     Finalize a Suggestion which has been accepted by the user. After providing a
     Suggestion to the user, this endpoint allows for providing the final accepted entry
-    context as well as any feedback requested when the Suggestion was generated.
+    context.
     """
-    await suggestion_ops.finalize_suggestion(
-        UUID(suggestion_id), entry, feedback, db=db
-    )
+    await suggestion_ops.finalize_suggestion(UUID(suggestion_id), entry, db=db)

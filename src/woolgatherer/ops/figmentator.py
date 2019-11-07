@@ -128,7 +128,7 @@ def compute_range(entry: SceneEntry) -> Range:
 async def figmentate(
     suggestion: Suggestion, figmentator: Figmentator, *, session: ClientSession
 ) -> Tuple[int, Dict[str, Any]]:
-    """ Make a preprocess request """
+    """ Make a figmentate request """
     try:
         url = URL(figmentator.url)
         url /= f"figment/{suggestion.story_hash}/new"

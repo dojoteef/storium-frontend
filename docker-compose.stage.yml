@@ -5,5 +5,9 @@ services:
     ports:
       - 8081:8000
     image: woolgatherer:stage
+    environment:
+      - LOGLEVEL=debug
   tasks:
     image: woolgatherer:stage
+    environment:
+      - LOGLEVEL=debug

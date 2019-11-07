@@ -1,9 +1,5 @@
 # A TODO List!
 
-## Required Functionality
-
-* Install error handlers for the exceptions I raise
-
 ## Advanced Functionality
 
 * Support HTTPS and/or HMAC authentication to use the API

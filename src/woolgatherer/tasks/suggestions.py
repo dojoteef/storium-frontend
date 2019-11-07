@@ -92,13 +92,21 @@ async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
                 await suggestion.update(db)
 
 
-@app.task
+@app.task(
+    autoretry_for=(ProcessingError,),
+    retry_kwargs={"max_retries": 3},
+    retry_backoff=0.25,
+)
 def create(story_id: str, context_hash: str, suggestion_type: SuggestionType):
     """ Create a suggestion """
     async_to_sync(_create)(story_id, context_hash, suggestion_type)
 
 
-@app.task
+@app.task(
+    autoretry_for=(ProcessingError,),
+    retry_kwargs={"max_retries": 3},
+    retry_backoff=0.25,
+)
 def figmentate(suggestion: Dict[str, Any], figmentator: Dict[str, Any]):
     """ Generate the figment """
     async_to_sync(_figmentate)(Suggestion(**suggestion), Figmentator(**figmentator))

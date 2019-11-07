@@ -52,7 +52,9 @@ async def _process(story_id: str, figmentators: List[Figmentator]):
         logger.info("Processed story=%s, status=%s", story_id, story.status)
 
 
-@app.task
+@app.task(
+    autoretry_for=(LookupError,), retry_kwargs={"max_retries": 3}, retry_backoff=0.25
+)
 def process(story_id: str, figmentators: List[Dict[str, Any]]):
     """ Preprocess a story """
     async_to_sync(_process)(story_id, [Figmentator(**f) for f in figmentators])

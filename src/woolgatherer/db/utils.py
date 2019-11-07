@@ -9,6 +9,11 @@ from typing import Any, Dict, Tuple
 import hashlib
 from importlib.util import find_spec
 
+try:
+    from psycopg2 import IntegrityError  # pylint: disable=unused-import
+except ImportError:
+    from sqlite3 import IntegrityError
+
 
 def has_postgres() -> bool:
     """ Whether to use postgres """

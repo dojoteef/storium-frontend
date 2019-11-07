@@ -7,6 +7,7 @@ from typing import Sequence
 
 from databases import Database
 
+from woolgatherer.db.utils import IntegrityError
 from woolgatherer.db_models.feedback import Feedback
 from woolgatherer.errors import InvalidOperationError
 from woolgatherer.models.feedback import FeedbackResponse
@@ -30,9 +31,12 @@ async def submit_feedback(
     if suggestion.status is not SuggestionStatus.done:
         raise InvalidOperationError("Suggestion has not completed")
 
-    for response in responses:
-        await Feedback(
-            type=response.type,
-            response=response.response,
-            suggestion_id=suggestion.uuid,
-        ).insert(db)
+    try:
+        for response in responses:
+            await Feedback(
+                type=response.type,
+                response=response.response,
+                suggestion_id=suggestion.uuid,
+            ).insert(db)
+    except IntegrityError:
+        raise InvalidOperationError("Cannot submit feedback more than once!")

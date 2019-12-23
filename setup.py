@@ -35,6 +35,7 @@ setup(
     install_requires=[
         "aiohttp==3.6.2",
         "alembic==1.2.1",
+        "alembic-autogenerate-enums==0.0.2",
         "celery==4.3.0",
         "asgiref==3.2.2",
         "fastapi==0.45.0",

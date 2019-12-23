@@ -10,6 +10,7 @@ from woolgatherer.db_models.base import DBBaseModel
 from woolgatherer.utils.settings import Settings
 
 from alembic import context
+import alembic_autogenerate_enums
 
 
 # this is the Alembic Config object, which provides

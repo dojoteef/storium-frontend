@@ -132,11 +132,12 @@ async def figmentate(
     try:
         url = URL(figmentator.url)
         url /= f"figment/{suggestion.story_hash}/new"
-        logging.info("Posting range: %s", compute_range(suggestion.generated))
+        computed_range = str(compute_range(suggestion.generated))
+        logging.info("Posting range: %s", computed_range)
         async with session.post(
             url.with_query(suggestion_type=suggestion.type.value),
             json=suggestion.generated.dict(),
-            headers={"Range": str(compute_range(suggestion.generated))},
+            headers={"Range": computed_range},
         ) as response:
             return response.status, await response.json()
     except client_exceptions.ClientResponseError as cre:

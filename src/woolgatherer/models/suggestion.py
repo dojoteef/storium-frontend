@@ -2,10 +2,10 @@
 Data models for suggestions.
 """
 from enum import auto
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from woolgatherer.models.range import RangeUnits
-from woolgatherer.models.utils import AutoNamedEnum, Field
+from woolgatherer.models.utils import AutoNamedEnum
 
 
 class SuggestionStatus(AutoNamedEnum):

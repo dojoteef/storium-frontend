@@ -7,8 +7,8 @@ from setuptools import setup, find_packages
 
 
 EXTRAS_REQUIRE = {}
-EXTRAS_REQUIRE["sqlite"] = ["aiosqlite"]
-EXTRAS_REQUIRE["postgresql"] = ["asyncpg", "psycopg2"]
+EXTRAS_REQUIRE["sqlite"] = ["aiosqlite==0.10.0"]
+EXTRAS_REQUIRE["postgresql"] = ["asyncpg==0.20.0", "psycopg2==2.8.4"]
 
 
 setup(
@@ -33,18 +33,19 @@ setup(
         ("share/woolgatherer/alembic/versions", glob.glob("alembic/versions/*.py")),
     ],
     install_requires=[
-        "aiohttp",
-        "alembic",
-        "celery",
-        "asgiref",
-        "fastapi",
-        "uvicorn",
-        "gunicorn",
-        "databases",
-        "sqlalchemy",
-        "sqlalchemy-utils",
-        "async-generator;python_version<'3.7'",
-        "async-exit-stack;python_version<'3.7'",
+        "aiohttp==3.6.2",
+        "alembic==1.2.1",
+        "celery==4.3.0",
+        "asgiref==3.2.2",
+        "fastapi==0.45.0",
+        "pydantic==1.1.1",
+        "uvicorn==0.9.0",
+        "gunicorn==19.9.0",
+        "databases==0.2.5",
+        "sqlalchemy==1.3.10",
+        "sqlalchemy-utils==0.34.2",
+        "async-generator==1.10;python_version<'3.7'",
+        "async-exit-stack==1.0.1;python_version<'3.7'",
     ],
     extras_require=EXTRAS_REQUIRE,
 )

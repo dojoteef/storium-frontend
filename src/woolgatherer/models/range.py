@@ -5,10 +5,10 @@ import re
 from enum import auto
 from typing import Any, List, Optional, Type
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 from pydantic.error_wrappers import ErrorWrapper
 
-from woolgatherer.models.utils import Field, AutoNamedEnum
+from woolgatherer.models.utils import AutoNamedEnum
 
 
 class RangeUnits(AutoNamedEnum):

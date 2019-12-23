@@ -4,9 +4,9 @@ Data models for feedback.
 from enum import auto
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from woolgatherer.models.utils import AutoNamedEnum, Field
+from woolgatherer.models.utils import AutoNamedEnum
 
 
 FeedbackScale = tuple(str(i) for i in range(1, 6))
@@ -18,12 +18,14 @@ class FeedbackType(AutoNamedEnum):
     - **fluency**: rating fluency
     - **relevance**: rating relevance
     - **coherence**: rating coherence
+    - **likeability**: rating likeability
     - **comments**: written comments
     """
 
     fluency = auto()
     relevance = auto()
     coherence = auto()
+    likeability = auto()
     comments = auto()
 
 

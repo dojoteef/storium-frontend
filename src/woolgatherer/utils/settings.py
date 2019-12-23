@@ -1,12 +1,11 @@
 """
 Encapsulate the configuration for woolgatherer
 """
-from typing import Tuple, Optional
+from typing import Tuple
 
-from pydantic import BaseSettings, DSN, SecretStr
+from pydantic import BaseSettings, Field
 
 from woolgatherer.db.utils import has_postgres
-from woolgatherer.models.utils import Field
 from woolgatherer.models.feedback import (
     FeedbackEntryType,
     FeedbackType,
@@ -19,19 +18,13 @@ from woolgatherer.models.suggestion import SceneEntryParameters
 class _DevSettings(BaseSettings):
     """ The basic app settings that don't require Postgres """
 
-    db_driver: str = "sqlite"
-    db_user: Optional[str] = None
-    db_password: Optional[SecretStr] = None
-    db_host: Optional[str] = None
-    db_port: Optional[int] = None
-    db_name: str = "woolgatherer.db"
-    db_query: Optional[dict] = None
-    dsn: DSN = Field(
-        None,
-        description="""The data source name, constructed from the various db fields""",
+    broker_url: str = Field(
+        "sqla+sqlite:///task_queue.db", description="The URL for the task broker"
+    )
+    dsn: str = Field(
+        "sqlite:///woolgatherer.db", description="The URL for the DB connection"
     )
 
-    broker_url: str = "sqla+sqlite:///task_queue.db"
     scene_entry_parameters: SceneEntryParameters = Field(
         SceneEntryParameters(), description=SceneEntryParameters.__doc__
     )
@@ -41,25 +34,35 @@ class _DevSettings(BaseSettings):
             choices=FeedbackScale,
             type=FeedbackType.fluency,
             entry_type=FeedbackEntryType.choice,
-            title="""Please rate the fluency of the suggestion.""",
+            title="How grammatical is the suggested text? "
+            "(on a scale of 1-5, with 1 being the lowest)",
         ),
         FeedbackPrompt(
             choices=FeedbackScale,
             type=FeedbackType.relevance,
             entry_type=FeedbackEntryType.choice,
-            title="""Please rate the relevance of the suggestion.""",
+            title="How relevant is the suggested text to the current story so far? "
+            "(on a scale of 1-5, with 1 being the lowest)",
         ),
         FeedbackPrompt(
             choices=FeedbackScale,
             type=FeedbackType.coherence,
             entry_type=FeedbackEntryType.choice,
-            title="""Please rate the coherence of the suggestion.""",
+            title="How well do the sentences in the suggested text fit together? "
+            "(on a scale of 1-5, with 1 being the lowest)",
+        ),
+        FeedbackPrompt(
+            choices=FeedbackScale,
+            type=FeedbackType.likeability,
+            entry_type=FeedbackEntryType.choice,
+            title="How enjoyable do you find the suggested text? "
+            "(on a scale of 1-5, with 1 being the lowest)",
         ),
         FeedbackPrompt(
             type=FeedbackType.comments,
             entry_type=FeedbackEntryType.text,
-            title="""Please provide any additional comments you have about the
-            suggestion.""",
+            title="Please provide any additional comments you have about "
+            "the suggested text.",
         ),
     )
 
@@ -72,15 +75,13 @@ class _DevSettings(BaseSettings):
 class _Settings(_DevSettings):
     """ The app settings """
 
-    db_driver: str = "postgresql"
-    db_user: Optional[str] = "postgres"
-    db_password: Optional[SecretStr] = None
-    db_host: Optional[str] = "db"
-    db_port: Optional[int] = 5432
-    db_name: str = "woolgatherer"
-    db_query: Optional[dict] = None
-
-    broker_url: str = "amqp://guest@queue"
+    broker_url: str = Field(
+        "amqp://guest@queue", description="The URL for the task broker"
+    )
+    dsn: str = Field(
+        "postgresql://postgres@db:5432/woolgatherer",
+        description="The URL for the DB connection",
+    )
 
 
 # Forward declare Settings to make mypy happy

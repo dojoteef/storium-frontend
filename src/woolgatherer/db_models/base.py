@@ -20,12 +20,11 @@ import sqlalchemy as sa
 from sqlalchemy.schema import Constraint
 from sqlalchemy.sql.expression import select, and_
 from databases import Database
-from pydantic import BaseConfig, BaseModel, Json
+from pydantic import BaseConfig, BaseModel, Field, Json
 
 from woolgatherer.db import types
 from woolgatherer.errors import InvalidOperationError
 from woolgatherer.utils import snake_case
-from woolgatherer.models.utils import Field
 
 
 __all__ = ["DBBaseModel"]
@@ -96,8 +95,8 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
             if not field.allow_none:
                 kwargs["nullable"] = False
 
-            if field.schema:
-                extra = field.schema.extra
+            if field.field_info:
+                extra = field.field_info.extra
                 for source_field, target_field in _ExtraFieldMappings.items():
                     if source_field in extra:
                         kwargs[target_field] = extra[source_field]
@@ -287,11 +286,11 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
     def db_construct(cls: Type["DBModel"], result) -> "DBModel":
         """ Construct an object of the class from a query result """
         return cls.construct(
-            {
+            set(result.keys()),
+            **{
                 k: types.from_db_type(cls.__fields__[k].type_, v)
                 for k, v in result.items()
             },
-            set(result.keys()),
         )
 
     @classmethod

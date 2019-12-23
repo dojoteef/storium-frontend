@@ -9,10 +9,11 @@ from sqlalchemy.schema import (  # pylint:disable=unused-import
     ForeignKey,
     UniqueConstraint,
 )
+from pydantic import Field
+
 from woolgatherer.db_models.base import DBBaseModel
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.models.suggestion import SuggestionStatus, SuggestionType
-from woolgatherer.models.utils import Field
 
 
 class Suggestion(

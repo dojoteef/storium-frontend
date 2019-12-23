@@ -3,14 +3,13 @@ This router handles the stories endpoints.
 """
 from typing import Any, Dict
 from databases import Database
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi import APIRouter, Body, Path, HTTPException, Depends
 from starlette.status import HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND
 from starlette.requests import Request
 from starlette.responses import Response
 
 from woolgatherer.db.session import get_db
-from woolgatherer.models.utils import Field
 from woolgatherer.models.stories import StoryStatus
 from woolgatherer.ops import stories as story_ops
 from woolgatherer.utils.routing import CompressibleRoute

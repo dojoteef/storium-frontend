@@ -3,7 +3,7 @@ This router handles the suggestion endpoints.
 """
 from uuid import UUID
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from databases import Database
 from fastapi import APIRouter, Body, Path, HTTPException, Depends
 from starlette.status import HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST
@@ -11,7 +11,6 @@ from starlette.status import HTTP_202_ACCEPTED, HTTP_404_NOT_FOUND, HTTP_400_BAD
 from woolgatherer.db.session import get_db
 from woolgatherer.db.utils import uuid_str
 from woolgatherer.db_models.storium import StoryStatus
-from woolgatherer.models.utils import Field
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.models.feedback import FeedbackPrompt, FeedbackResponse
 from woolgatherer.models.suggestion import SuggestionType, SuggestionStatus
@@ -57,7 +56,7 @@ class SuggestionResponse(BaseModel):
     Additionally, you will recieve a list of feedback we desire from the user once the
     scene entry is finalized.""",
     response_model=SuggestionCreatedResponse,
-    response_model_skip_defaults=True,
+    response_model_exclude_unset=True,
 )
 async def create_suggestion(
     story_id: str = Body(

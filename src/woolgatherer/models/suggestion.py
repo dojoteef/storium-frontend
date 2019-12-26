@@ -45,7 +45,7 @@ class SceneEntryParameters(BaseModel):
     )
 
     chunk_size: int = Field(
-        25,
+        50,
         description="""
 How many units to generate per request to a figmentator. This is used to allow streaming
 the generated suggestion.

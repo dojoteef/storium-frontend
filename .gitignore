@@ -28,3 +28,6 @@ venv
 # deployment
 deploy
 *.db
+
+# site specific yaml
+docker-compose.env.yml

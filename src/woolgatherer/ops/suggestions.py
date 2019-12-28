@@ -25,6 +25,9 @@ async def get_or_create_suggestion(
     db: Database,
 ) -> Tuple[Optional[Suggestion], Sequence[FeedbackPrompt]]:
     """ Create a suggestion. First mark it in the db, then create a task. """
+    if context.description:
+        return None, Settings.required_feedback
+
     _, context_hash = json_hash(context.dict())
     suggestion = await get_suggestion(
         story_hash, context_or_hash=context_hash, suggestion_type=suggestion_type, db=db

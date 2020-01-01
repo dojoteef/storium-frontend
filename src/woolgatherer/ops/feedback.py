@@ -13,6 +13,7 @@ from woolgatherer.errors import InvalidOperationError
 from woolgatherer.models.feedback import FeedbackResponse
 from woolgatherer.models.suggestion import SuggestionStatus
 from woolgatherer.ops import suggestions as suggestion_ops
+from woolgatherer.utils.settings import Settings
 
 
 async def submit_feedback(
@@ -31,6 +32,9 @@ async def submit_feedback(
     if suggestion.status is not SuggestionStatus.done:
         raise InvalidOperationError("Suggestion has not completed")
 
+    # Make sure the feedback is valid
+    validate_feedback(responses)
+
     try:
         for response in responses:
             await Feedback(
@@ -40,3 +44,24 @@ async def submit_feedback(
             ).insert(db)
     except IntegrityError:
         raise InvalidOperationError("Cannot submit feedback more than once!")
+
+
+def validate_feedback(responses: Sequence[FeedbackResponse]):
+    """
+    A function which validates the feedback. Users must fill out all feedback
+    and must respect the valid choices of feedback.
+
+    Raises InvalidOperationError in case the feedback is invalid.
+    """
+    feedback_by_type = {r.type: r for r in responses}
+    for feedback_prompt in Settings.required_feedback:
+        feedback_type = feedback_prompt.type
+        if feedback_type not in feedback_by_type:
+            raise InvalidOperationError(f"Missing required feedback: {feedback_type}")
+
+        choices = feedback_prompt.choices
+        response = feedback_by_type[feedback_type].response
+        if choices and response not in choices:
+            raise InvalidOperationError(
+                f"Invalid response '{response}' for feedback of type {feedback_type}"
+            )

@@ -10,14 +10,16 @@ import hashlib
 from importlib.util import find_spec
 
 try:
-    from psycopg2 import IntegrityError  # pylint: disable=unused-import
+    from asyncpg.exceptions import (  # pylint: disable=unused-import
+        IntegrityConstraintViolationError as IntegrityError,
+    )
 except ImportError:
-    from sqlite3 import IntegrityError
+    from sqlite3 import IntegrityError  # pylint: disable=unused-import
 
 
 def has_postgres() -> bool:
     """ Whether to use postgres """
-    return find_spec("psycopg2") is not None
+    return find_spec("asyncpg") is not None
 
 
 class JSONEncoder(json.JSONEncoder):

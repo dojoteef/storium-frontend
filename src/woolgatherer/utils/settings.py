@@ -34,7 +34,7 @@ class _DevSettings(BaseSettings):
             choices=FeedbackScale,
             type=FeedbackType.fluency,
             entry_type=FeedbackEntryType.choice,
-            title="How grammatical is the suggested text? "
+            title="How grammatically correct is the suggested text? "
             "(on a scale of 1-5, with 1 being the lowest)",
         ),
         FeedbackPrompt(

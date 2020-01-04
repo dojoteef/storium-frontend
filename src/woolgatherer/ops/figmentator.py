@@ -1,6 +1,7 @@
 """
 Operations on suggestion generators
 """
+import re
 import logging
 from typing import Any, Dict, List, Tuple
 import unicodedata
@@ -15,6 +16,17 @@ from woolgatherer.db_models.suggestion import Suggestion
 from woolgatherer.models.range import Range, Subrange, RangeUnits
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.utils.settings import Settings
+
+
+TOKENIZER_REGEX = re.compile(r"\w+|[^\w\s]+")
+
+
+def tokenize(text: str) -> List[str]:
+    """
+    Implement a simple tokenizer that seperates continguous word characters and
+    punctuation.
+    """
+    return TOKENIZER_REGEX.findall(text)
 
 
 def NFC(text):
@@ -105,8 +117,8 @@ def compute_range(entry: SceneEntry) -> Range:
 
     entry_len = (
         (
-            # Split on whitespace for computing the number of words in a suggestion.
-            len(entry.description.split())
+            # Tokenize for computing the number of words in a suggestion.
+            len(tokenize(entry.description))
             if Settings.scene_entry_parameters.units == RangeUnits.words
             # Otherwise length is just number of characters
             else len(NFC(entry.description))

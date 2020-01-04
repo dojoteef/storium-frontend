@@ -26,14 +26,14 @@ async def get_or_create_suggestion(
 ) -> Tuple[Optional[Suggestion], Sequence[FeedbackPrompt]]:
     """ Create a suggestion. First mark it in the db, then create a task. """
     if context.description:
-        return None, Settings.required_feedback
+        return None, Settings.user_feedback
 
     _, context_hash = json_hash(context.dict())
     suggestion = await get_suggestion(
         story_hash, context_or_hash=context_hash, suggestion_type=suggestion_type, db=db
     )
     if suggestion:
-        return suggestion, Settings.required_feedback
+        return suggestion, Settings.user_feedback
 
     logging.debug("Creating suggestion for story_id: %s", story_hash)
     suggestion = Suggestion(
@@ -48,7 +48,7 @@ async def get_or_create_suggestion(
     task = suggestions.create.delay(story_hash, context_hash, suggestion_type)
     logging.debug("Started task %s", task.id)
 
-    return suggestion, Settings.required_feedback
+    return suggestion, Settings.user_feedback
 
 
 @singledispatch

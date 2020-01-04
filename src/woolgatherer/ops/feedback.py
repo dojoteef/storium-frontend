@@ -65,3 +65,15 @@ def validate_feedback(responses: Sequence[FeedbackResponse]):
             raise InvalidOperationError(
                 f"Invalid response '{response}' for feedback of type {feedback_type}"
             )
+
+    for feedback_prompt in Settings.optional_feedback:
+        feedback_type = feedback_prompt.type
+        if feedback_type not in feedback_by_type:
+            continue
+
+        choices = feedback_prompt.choices
+        response = feedback_by_type[feedback_type].response
+        if choices and response not in choices:
+            raise InvalidOperationError(
+                f"Invalid response '{response}' for feedback of type {feedback_type}"
+            )

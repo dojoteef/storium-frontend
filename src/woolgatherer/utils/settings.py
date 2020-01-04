@@ -58,6 +58,9 @@ class _DevSettings(BaseSettings):
             title="How enjoyable do you find the suggested text? "
             "(on a scale of 1-5, with 1 being the lowest)",
         ),
+    )
+
+    optional_feedback: Tuple[FeedbackPrompt, ...] = (
         FeedbackPrompt(
             type=FeedbackType.comments,
             entry_type=FeedbackEntryType.text,
@@ -65,6 +68,13 @@ class _DevSettings(BaseSettings):
             "the suggested text.",
         ),
     )
+
+    @property
+    def user_feedback(self):
+        """
+        Return both required and optional feedback
+        """
+        return self.required_feedback + self.optional_feedback
 
     class Config:
         """ Additional configuration for the settings """

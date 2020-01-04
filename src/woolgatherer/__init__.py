@@ -33,8 +33,8 @@ async def invalid_operation_exception_handler(
 
 @app.exception_handler(InsufficientCapacityError)
 async def insufficent_capacity_exception_handler(
-    request: Request,
-    exception: InsufficientCapacityError,  # pylint:disable=unused-argument
+    request: Request,  # pylint:disable=unused-argument
+    exception: InsufficientCapacityError,
 ):
     """ A handler for invalid operation errors """
     return JSONResponse(

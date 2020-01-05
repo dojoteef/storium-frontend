@@ -11,6 +11,7 @@ from celery.utils.log import get_task_logger
 from pydantic import ValidationError
 
 from woolgatherer.db_models.figmentator import Figmentator, FigmentatorForStory
+from woolgatherer.db_models.storium import Story
 from woolgatherer.db_models.suggestion import (
     Suggestion,
     SuggestionStatus,
@@ -61,6 +62,7 @@ async def _create(story_id: str, context_hash: str, suggestion_type: SuggestionT
 
 async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
     async with ClientSession(json_serialize=json_dumps) as session:
+        success = False
         status, entry = await figmentator_ops.figmentate(
             suggestion, figmentator, session=session
         )
@@ -77,12 +79,38 @@ async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
                 if status == 200:
                     suggestion.status = SuggestionStatus.done
 
+                success = True
                 await suggestion.update(db)
                 if status == 206:
                     # This indicates we received a partial result, so we need to queue
                     # up another task in order finish generating the suggestion.
                     figmentate.delay(suggestion.dict(), figmentator.dict())
-            else:
+            elif status == 404:
+                # This case means the figmentator does not have the
+                # preprocessed data. Since it is saved in an ephemeral redis
+                # cache, it's possible that the cache was restarted causing all
+                # preprocessed data to be dropped (or some other reason causing
+                # the preprocessed data to be booted from the cache). Issue a
+                # request to preprocess the data and then retry the suggestion
+                # generation.
+                story_id = suggestion.story_hash
+                where = {"hash": story_id}
+                story = await Story.select(db, where=where)
+                if not story:
+                    # This either means we incorrectly added a task before
+                    # putting the story into the database, we cannot access the
+                    # database, or something very bad happened, like dropping
+                    # entries from the database...
+                    raise LookupError(f"Cannot find story for id={story_id}!")
+                success, figmentator = await figmentator_ops.preprocess(
+                    {"story_id": story_id, "story": story.story},
+                    figmentator,
+                    session=session,
+                )
+                if success:
+                    figmentate.delay(suggestion.dict(), figmentator.dict())
+
+            if not success:
                 logger.error(
                     "Figmentator query failed (status=%s, reponse={%s})",
                     status,

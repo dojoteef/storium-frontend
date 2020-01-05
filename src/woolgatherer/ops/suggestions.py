@@ -13,7 +13,11 @@ from woolgatherer.tasks import suggestions
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.models.feedback import FeedbackPrompt
 from woolgatherer.db.utils import json_hash
-from woolgatherer.db_models.suggestion import Suggestion, SuggestionType
+from woolgatherer.db_models.suggestion import (
+    Suggestion,
+    SuggestionStatus,
+    SuggestionType,
+)
 from woolgatherer.utils.settings import Settings
 
 
@@ -33,7 +37,16 @@ async def get_or_create_suggestion(
         story_hash, context_or_hash=context_hash, suggestion_type=suggestion_type, db=db
     )
     if suggestion:
-        return suggestion, Settings.user_feedback
+        if suggestion.status == SuggestionStatus.failed:
+            suggestion.status = SuggestionStatus.pending
+            await suggestion.update(db)
+
+            task = suggestions.create.delay(story_hash, context_hash, suggestion_type)
+            logging.debug("Started task %s", task.id)
+
+            return suggestion, Settings.user_feedback
+        else:
+            return suggestion, Settings.user_feedback
 
     logging.debug("Creating suggestion for story_id: %s", story_hash)
     suggestion = Suggestion(

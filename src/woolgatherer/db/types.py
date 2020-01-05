@@ -100,7 +100,7 @@ TypeOrder: Dict[sa.types.TypeEngine, int] = {
 def to_db_type(obj: Any) -> Any:
     """ Convert an object to a type acceptable by the database """
     if isinstance(obj, BaseModel):
-        return obj.json()
+        return json.loads(obj.json())
 
     if isinstance(obj, datetime.datetime):
         return obj.isoformat(" ")

@@ -142,7 +142,7 @@ async def process_command(args: Namespace) -> None:
             if not args_dict:
                 raise ValueError("Must specify at least one field to update")
 
-            figmentator = Figmentator.construct(args_dict, set(args_dict))
+            figmentator = Figmentator.construct(set(args_dict), **args_dict)
             await figmentator.update(db, where=where)
         elif action == Actions.query:
             for result in await Figmentator.select_all(db, where=args_dict):

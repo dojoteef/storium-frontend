@@ -6,8 +6,11 @@ ARG PIP_CMD="pip install"
 WORKDIR /var/www/woolgatherer
 COPY setup.py alembic.ini ./
 COPY src src
+COPY sql sql
 COPY alembic alembic
 COPY scripts scripts
+COPY static static
+COPY templates templates
 
 # Install build dependencies, then install app, then remove build dependencies
 # and install the libpq dependency for postgresql

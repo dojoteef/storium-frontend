@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="{{ url_for('static', path='/dashboard.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <title>Woolgatherer Dashboard</title>
+  </head>
+  <body>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col mr-0" href="#">Woolgatherer Dashboard</a>
+    </nav>
+
+    <div class="container-fluid">
+      <main role="main" class="col ml-sm-auto px-4">
+        <h2>Average Ratings</h2>
+        <table id="avg-rating" class="table table-striped">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Type</th>
+              <th scope="col">Model Name</th>
+              <th scope="col">Average Rating</th>
+              <th scope="col">Feedback Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rating in ratings %}
+            <tr>
+              <td>{{rating.type}}</td>
+              <td>{{rating.model_name}}</td>
+              <td>{{rating.avg_rating}}</td>
+              <td>{{rating.feedback_count}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <h2>Edited Suggestions</h2>
+        <table id="edits" class="table table-striped">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Suggestion</th>
+              <th scope="col">Diff</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for edit in edits %}
+            <tr>
+              <th scope="row">#{{loop.index}}</th>
+              <td>
+                {% for type, word in edit.diff %}<span class="{{type}}">{{word}} </span>{% endfor %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </main>
+    </div>
+
+  </body>
+</html>

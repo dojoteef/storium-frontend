@@ -1,13 +1,16 @@
 """
 DB utilities
 """
+import os
 import json
+import hashlib
 from uuid import UUID
 from functools import partial
 from datetime import datetime
 from typing import Any, Dict, Tuple
-import hashlib
 from importlib.util import find_spec
+
+import aiofiles
 
 try:
     from asyncpg.exceptions import (  # pylint: disable=unused-import
@@ -20,6 +23,15 @@ except ImportError:
 def has_postgres() -> bool:
     """ Whether to use postgres """
     return find_spec("asyncpg") is not None
+
+
+async def load_query(filename: str) -> str:
+    """
+    Load the query from the file and return it
+    """
+    dialect = "postgres" if has_postgres() else "sqlite"
+    async with aiofiles.open(os.path.join("sql", dialect, filename), "rt") as sql:
+        return await sql.read()
 
 
 class JSONEncoder(json.JSONEncoder):

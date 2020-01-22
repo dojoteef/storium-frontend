@@ -69,7 +69,7 @@ WITH
     min_counts AS
     (SELECT
         type,
-        MIN(story_count) as min_count
+        MIN(story_count) AS min_count
     FROM
         story_totals
     GROUP BY
@@ -81,9 +81,9 @@ SELECT {DISTINCT}
     st.type,
     st.status
 FROM
-    story_totals as st
+    story_totals AS st
         LEFT JOIN
-    min_counts as mc
+    min_counts AS mc
         ON mc.type = st.type
 WHERE
     st.story_count = mc.min_count

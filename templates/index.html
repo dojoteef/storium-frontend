@@ -49,14 +49,16 @@
         <table id="edits" class="table table-striped">
           <thead class="thead-dark">
             <tr>
-              <th scope="col">Suggestion</th>
-              <th scope="col">Diff</th>
+              <th scope="col" style="width: 5%">Suggestion</th>
+              <th scope="col" style="width: 15%">Model Name</th>
+              <th scope="col" style="width: 70%">Diff</th>
             </tr>
           </thead>
           <tbody>
             {% for edit in edits %}
             <tr>
               <th scope="row">#{{loop.index}}</th>
+              <td scope="row">{{edit.model_name}}</td>
               <td>
                 {% for type, word in edit.diff %}<span class="{{type}}">{{word}} </span>{% endfor %}
               </td>

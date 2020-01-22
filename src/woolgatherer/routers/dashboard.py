@@ -49,12 +49,15 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
     for row in await db.fetch_all(await load_query("finalized_suggestions.sql")):
         finalized = row["user_text"]
         generated = row["generated_text"]
+        model_name = row["model_name"]
+
         diff = [
             parse_diff(word)
             for word in differ.compare(generated.split(), finalized.split())
             if word[0] != "?"
         ]
-        edits.append({"generated": generated, "finalized": finalized, "diff": diff})
+
+        edits.append({"model_name": model_name, "diff": diff})
 
     return templates.TemplateResponse(
         "index.html", {"request": request, "ratings": ratings, "edits": edits}

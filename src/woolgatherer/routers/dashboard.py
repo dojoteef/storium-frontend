@@ -42,7 +42,14 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
     This method returns a template for the main dashboard of the woolgatherer
     service.
     """
-    ratings = await db.fetch_all(await load_query("avg_ratings.sql"))
+    query = await load_query("suggestion_counts_by_user.sql")
+    suggestion_counts = {}
+    for c in [1, 5, 10, 20, float("inf")]:
+        result = await db.fetch_one(query, values={"suggestion_count": c})
+        if not result:
+            continue
+
+        suggestion_counts[c] = result["unique_user_count"]
 
     edits = []
     differ = Differ()
@@ -59,6 +66,13 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
 
         edits.append({"model_name": model_name, "diff": diff})
 
+    ratings = await db.fetch_all(await load_query("avg_ratings.sql"))
     return templates.TemplateResponse(
-        "index.html", {"request": request, "ratings": ratings, "edits": edits}
+        "index.html",
+        {
+            "request": request,
+            "ratings": ratings,
+            "edits": edits,
+            "suggestion_counts": suggestion_counts,
+        },
     )

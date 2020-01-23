@@ -7,4 +7,5 @@ FROM figmentator AS m
   ON m.id = ffs.model_id
     INNER JOIN suggestion AS s
     ON s.story_hash = ffs.story_hash
-WHERE cast(json_extract(s.finalized, '$.description') AS text) != 'null';
+WHERE cast(json_extract(s.finalized, '$.description') AS text) != 'null'
+ORDER BY json_extract(s.context, '$.created_at');

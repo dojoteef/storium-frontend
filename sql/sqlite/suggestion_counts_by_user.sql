@@ -9,4 +9,4 @@ WITH
   SELECT
     count(suggestion_count) AS unique_user_count
   FROM suggestion_counts
-  WHERE suggestion_count < :suggestion_count;
+  WHERE suggestion_count <= :suggestion_count;

@@ -6,17 +6,21 @@ services:
       context: .
     depends_on:
       - db
+    restart: unless-stopped
   tasks:
     command: gw-tasks
     depends_on:
       - db
       - queue
+    restart: unless-stopped
   db:
     image: postgres:12-alpine
     volumes:
       - woolgatherer-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
   queue:
     image: rabbitmq:3-alpine
+    restart: unless-stopped
 
 volumes:
   woolgatherer-db-data:

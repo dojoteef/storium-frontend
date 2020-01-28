@@ -3,6 +3,7 @@ This router handles the stories endpoints.
 """
 from difflib import Differ
 from typing import Tuple
+from itertools import groupby
 
 from databases import Database
 from fastapi import APIRouter, Depends
@@ -67,12 +68,18 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         edits.append({"model_name": model_name, "diff": diff})
 
     ratings = await db.fetch_all(await load_query("avg_ratings.sql"))
+    ratings_by_type = {
+        t: [{k: v for k, v in r.items() if k != "type"} for r in g]
+        for t, g in groupby(ratings, lambda x: x["type"])
+    }
+
     return templates.TemplateResponse(
         "index.html",
         {
+            "edits": edits,
             "request": request,
             "ratings": ratings,
-            "edits": edits,
+            "ratings_by_type": ratings_by_type,
             "suggestion_counts": suggestion_counts,
         },
     )

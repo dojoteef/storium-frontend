@@ -29,7 +29,8 @@ class _DevSettings(BaseSettings):
         SceneEntryParameters(), description=SceneEntryParameters.__doc__
     )
 
-    required_feedback: Tuple[FeedbackPrompt, ...] = (
+    required_feedback: Tuple[FeedbackPrompt, ...] = ()
+    optional_feedback: Tuple[FeedbackPrompt, ...] = (
         FeedbackPrompt(
             choices=FeedbackScale,
             type=FeedbackType.fluency,
@@ -58,9 +59,6 @@ class _DevSettings(BaseSettings):
             title="How enjoyable do you find the suggested text? "
             "(on a scale of 1-5, with 1 being the lowest)",
         ),
-    )
-
-    optional_feedback: Tuple[FeedbackPrompt, ...] = (
         FeedbackPrompt(
             type=FeedbackType.comments,
             entry_type=FeedbackEntryType.text,

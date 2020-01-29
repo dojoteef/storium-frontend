@@ -12,6 +12,7 @@ $(document).ready(function () {
       "info": false,
       "paging": false,
       "searching": false,
+      "order": [1, 'dsc'],
       "columnDefs": [
         {"targets": [1, 2], "type": "num"}
       ]

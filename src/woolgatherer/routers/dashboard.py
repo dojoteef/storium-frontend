@@ -13,6 +13,7 @@ from starlette.templating import Jinja2Templates
 from woolgatherer.db.session import get_db
 from woolgatherer.db.utils import load_query
 from woolgatherer.utils.routing import CompressibleRoute
+from woolgatherer.utils import split_sentences, overlap
 
 
 router = APIRouter()
@@ -65,7 +66,18 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
             if word[0] != "?"
         ]
 
-        edits.append({"model_name": model_name, "diff": diff})
+        finalized_sentences = split_sentences(finalized)
+        generated_sentences = split_sentences(generated)
+
+        edits.append(
+            {
+                "diff": diff,
+                "model_name": model_name,
+                "finalized_sentences": len(finalized_sentences),
+                "generated_sentences": len(generated_sentences),
+                "overlap": overlap(finalized_sentences, generated_sentences),
+            }
+        )
 
     ratings = await db.fetch_all(await load_query("avg_ratings.sql"))
     ratings_by_type = {

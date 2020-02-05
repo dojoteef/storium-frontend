@@ -73,9 +73,12 @@
         <table id="suggestions-table" class="table table-striped">
           <thead class="thead-dark">
             <tr>
-              <th scope="col" style="width: 5%">Suggestion</th>
-              <th scope="col" style="width: 15%">Model Name</th>
-              <th scope="col" style="width: 70%">Diff</th>
+              <th class="align-top" scope="col" style="width: 5%">Suggestion</th>
+              <th class="align-top" scope="col" style="width: 15%">Model Name</th>
+              <th class="align-top" scope="col" style="width: 5%">#User Sentences</th>
+              <th class="align-top" scope="col" style="width: 5%">#Suggestion Sentences</th>
+              <th class="align-top" scope="col" style="width: 5%">#Overlapping Sentences</th>
+              <th class="align-top" scope="col" style="width: 65%">Diff</th>
             </tr>
           </thead>
           <tbody>
@@ -83,6 +86,9 @@
             <tr>
               <th scope="row"><span class="suggestion-number">{{loop.index}}</span></th>
               <td scope="row">{{edit.model_name}}</td>
+              <td scope="row">{{edit.finalized_sentences}}</td>
+              <td scope="row">{{edit.generated_sentences}}</td>
+              <td scope="row">{{edit.overlap}}</td>
               <td>
                 {% for type, word in edit.diff %}<span class="{{type}}">{{word}} </span>{% endfor %}
               </td>

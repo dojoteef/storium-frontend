@@ -75,6 +75,7 @@ setup(
         "jinja2==2.10.3",
         "asgiref==3.2.2",
         "fastapi==0.45.0",
+        "regex==2020.1.8",
         "pydantic==1.1.1",
         "uvicorn==0.9.0",
         "gunicorn==19.9.0",

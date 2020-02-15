@@ -1,10 +1,12 @@
 """
 Defines the structure for ranges
 """
-import re
+import string
+import unicodedata
 from enum import auto
 from typing import Any, List, Optional, Type
 
+import regex as re
 from pydantic import BaseModel, Field, ValidationError
 from pydantic.error_wrappers import ErrorWrapper
 
@@ -18,10 +20,24 @@ class RangeUnits(AutoNamedEnum):
 
     - **words**: specify the range in words
     - **chars**: specify the range in characters
+    - **sentences**: specify the range in sentences
     """
 
     words = auto()
     chars = auto()
+    sentences = auto()
+
+    SPLITTERS = {
+        chars: lambda text: len(NFC(text)),
+        words: lambda text: len(tokenize(text)),
+        sentences: lambda text: len(split_sentences(text)),
+    }
+
+    def split_text(self, text):
+        """
+        Split text into range units
+        """
+        return RangeUnits.SPLITTERS[self](text)
 
 
 SUBRANGE_REGEX_STR = r"((?<!=),)?(?P<start>\d+|(?!-(,|$)))-(?P<end>(\d+)?)"
@@ -31,6 +47,10 @@ RANGE_REGEX_STR = (
 
 SUBRANGE_REGEX = regex = re.compile(SUBRANGE_REGEX_STR)
 RANGE_REGEX = regex = re.compile(RANGE_REGEX_STR)
+TOKENIZER_REGEX = re.compile(r"\w+|[^\w\s]+")
+SENT_REGEX = re.compile(
+    rf'(?<=\w\w[{string.punctuation}]*[.?!]+)(?:\s|\r\n)+(?="?[A-Z])'
+)
 
 
 class Subrange(BaseModel):
@@ -106,3 +126,47 @@ A list of subranges as specified in RFC7233 (https://tools.ietf.org/html/rfc7233
         # pylint:disable=unsubscriptable-object
         return self.ranges[0].start is not None and self.ranges[0].end is not None
         # pylint:enable=unsubscriptable-object
+
+
+def tokenize(text: str) -> List[str]:
+    """
+    Implement a simple tokenizer that seperates continguous word characters and
+    punctuation.
+    """
+    return TOKENIZER_REGEX.findall(text)
+
+
+def NFC(text):
+    """
+    Normalize the unicode string into NFC form
+
+    Read more about that here:
+    https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
+    """
+    return unicodedata.normalize("NFC", text)
+
+
+def split_sentences(text: str) -> List[str]:
+    """
+    Split a text string into a number of sentences using a simple regex
+    """
+    return SENT_REGEX.split(text)
+
+
+def compute_range(
+    text: str, units: RangeUnits, max_length: int, chunk_size: int
+) -> Range:
+    """ Compute the range of the scene entry """
+    ranges: List[Subrange] = []
+    range_dict = {"unit": units, "ranges": ranges}
+
+    text_len = len(units.split_text(text))
+    remaining = max_length - text_len
+    if remaining > 0:
+        end = min(remaining, chunk_size)
+        start = text_len if end == remaining else None
+        end = start + remaining if start else end
+
+        ranges.append(Subrange(start=start, end=end))
+
+    return Range(**range_dict)

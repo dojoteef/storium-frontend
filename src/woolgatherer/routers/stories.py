@@ -2,6 +2,7 @@
 This router handles the stories endpoints.
 """
 from typing import Any, Dict
+
 from databases import Database
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Body, Path, HTTPException, Depends

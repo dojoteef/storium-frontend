@@ -1,10 +1,8 @@
 """
 Operations on suggestion generators
 """
-import re
 import logging
 from typing import Any, Dict, List, Tuple
-import unicodedata
 
 from yarl import URL
 from databases import Database
@@ -13,30 +11,8 @@ from aiohttp import ClientSession, client_exceptions
 from woolgatherer.db.utils import has_postgres
 from woolgatherer.db_models.figmentator import Figmentator
 from woolgatherer.db_models.suggestion import Suggestion
-from woolgatherer.models.range import Range, Subrange, RangeUnits
-from woolgatherer.models.storium import SceneEntry
+from woolgatherer.models.range import compute_range
 from woolgatherer.utils.settings import Settings
-
-
-TOKENIZER_REGEX = re.compile(r"\w+|[^\w\s]+")
-
-
-def tokenize(text: str) -> List[str]:
-    """
-    Implement a simple tokenizer that seperates continguous word characters and
-    punctuation.
-    """
-    return TOKENIZER_REGEX.findall(text)
-
-
-def NFC(text):
-    """
-    Normalize the unicode string into NFC form
-
-    Read more about that here:
-    https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
-    """
-    return unicodedata.normalize("NFC", text)
 
 
 # Need both clauses: one to statisfy PostgreSQL and the other for SQLite
@@ -110,33 +86,6 @@ async def preprocess(
         return False, figmentator
 
 
-def compute_range(entry: SceneEntry) -> Range:
-    """ Compute the range of the scene entry """
-    ranges: List[Subrange] = []
-    range_dict = {"unit": Settings.scene_entry_parameters.units, "ranges": ranges}
-
-    entry_len = (
-        (
-            # Tokenize for computing the number of words in a suggestion.
-            len(tokenize(entry.description))
-            if Settings.scene_entry_parameters.units == RangeUnits.words
-            # Otherwise length is just number of characters
-            else len(NFC(entry.description))
-        )
-        if entry.description
-        else 0
-    )
-    remaining = Settings.scene_entry_parameters.max_length - entry_len
-    if remaining > 0:
-        end = min(remaining, Settings.scene_entry_parameters.chunk_size)
-        start = entry_len if end == remaining else None
-        end = start + remaining if start else end
-
-        ranges.append(Subrange(start=start, end=end))
-
-    return Range(**range_dict)
-
-
 async def figmentate(
     suggestion: Suggestion, figmentator: Figmentator, *, session: ClientSession
 ) -> Tuple[int, Dict[str, Any]]:
@@ -144,7 +93,13 @@ async def figmentate(
     try:
         url = URL(figmentator.url)
         url /= f"figment/{suggestion.story_hash}/new"
-        computed_range = str(compute_range(suggestion.generated))
+
+        computed_range = str(
+            compute_range(
+                suggestion.generated.description or "",
+                **Settings.scene_entry_parameters.dict(),
+            )
+        )
         logging.info("Posting range: %s", computed_range)
         async with session.post(
             url.with_query(suggestion_type=suggestion.type.value),

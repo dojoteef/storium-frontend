@@ -16,6 +16,7 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/v/bs4/jq-3.3.1/dt-1.10.20/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
     <script type="text/javascript" src="{{ url_for('static', path='/dashboard.js') }}"></script>
 
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
@@ -68,6 +69,22 @@
           </tbody>
         </table>
 
+        <h2>Histogram of Sentence Overlap</h2>
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-3">
+              <div class="row justify-content-center">
+                <span id="sentenceHistogramCount" class="alert alert-dark" disabled>Total Overlaps:</span>
+              </div>
+              <div class="row justify-content-center">
+                <canvas id="sentenceHistogram" width="400" height="400"></canvas>
+              </div>
+              <div class="row justify-content-center">
+                <button id="sentenceHistogramFilter" type="button" class="btn btn-light" title="Filter out unmodified suggestions">Filter Unmodified</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <h2 id="edits">Edited Suggestions</h2>
         <table id="suggestions-table" class="table table-striped">
@@ -88,7 +105,7 @@
               <td scope="row">{{edit.model_name}}</td>
               <td scope="row">{{edit.finalized_sentences}}</td>
               <td scope="row">{{edit.generated_sentences}}</td>
-              <td scope="row">{{edit.overlap}}</td>
+              <td scope="row">{{edit.overlaps}}</td>
               <td>
                 {% for type, word in edit.diff %}<span class="{{type}}">{{word}} </span>{% endfor %}
               </td>

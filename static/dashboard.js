@@ -1,4 +1,4 @@
-$(document).ready(function () {
+function setupSuggestionsTable() {
   suggestions_table = $("#suggestions-table").DataTable({
     "columnDefs": [
       {"targets": 5, "orderable": false},
@@ -31,10 +31,11 @@ $(document).ready(function () {
     .each(function(d) {
       select.append($('<option value="'+d+'">'+d+'</option>'));
     });
+}
 
-  var all_rating_tables = document.getElementsByName("avg-rating-table");
-  for (var i=0, len=all_rating_tables.length|0; i<len; i=i+1|0) {
-    $("#" + all_rating_tables[i].id).DataTable({
+function setupRatingsTables() {
+  $("[name=avg-rating-table").each(function() {
+    $(this).DataTable({
       "info": false,
       "paging": false,
       "searching": false,
@@ -43,5 +44,70 @@ $(document).ready(function () {
         {"targets": [1, 2], "type": "num"}
       ]
     });
+  });
+}
+
+function setupSentenceHistogram() {
+  var httpRequest;
+  var filtered = false;
+
+  var histogram = new Chart("sentenceHistogram", {
+    type: 'bar',
+    data: {
+      datasets: [{
+        label: "Position of sentence overlaps",
+        borderWidth: 1
+      }]
+    }
+  });
+
+  // Make an initial request to setup the histogram
+  makeRequest();
+
+  $("#sentenceHistogramFilter").click(
+    function () {
+      filtered = !filtered;
+      $(this).text(filtered ? "Show All" : "Filter Unmodified");
+      makeRequest();
+    });
+
+  function makeRequest() {
+    httpRequest = new XMLHttpRequest();
+    if (!httpRequest) {
+      alert("Cannot contact server!");
+      return false;
+    }
+    httpRequest.onreadystatechange = setupHistogram;
+    httpRequest.open('GET', '/dashboard/sentence/histogram?filtered=' + filtered);
+    httpRequest.send();
   }
+
+  function setupHistogram() {
+    if (httpRequest.readyState != XMLHttpRequest.DONE) {
+      return;
+    }
+
+    if (httpRequest.status != 200) {
+      alert("Invalid response from server!");
+      return;
+    }
+
+    var response = JSON.parse(httpRequest.responseText);
+
+    // Setup the overlap heading
+    $("#sentenceHistogramCount").text(
+      "Total Overlaps: " + Object.values(response).reduce((a, b) => a + b, 0)
+    );
+
+    // Then update the histogram
+    histogram.data.labels = Object.keys(response);
+    histogram.data.datasets[0].data = Object.values(response);
+    histogram.update();
+  }
+}
+
+$(document).ready(function () {
+  setupRatingsTables();
+  setupSuggestionsTable();
+  setupSentenceHistogram();
 });

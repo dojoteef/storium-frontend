@@ -1,16 +1,10 @@
 """
 Additional utilities
 """
-import string
 from typing import List
 from itertools import zip_longest
 
 import regex as re
-
-
-SENT_REGEX = re.compile(
-    rf'(?<=\w\w[{string.punctuation}]*[.?!]+)(?:\s|\r\n)+(?="?[A-Z])'
-)
 
 
 def snake_case(name: str) -> str:
@@ -38,14 +32,7 @@ def grouper(iterable, n, fillvalue=None, padded=False):  # pylint:disable=invali
         return [[x for x in group if x is not fillvalue] for group in groups]
 
 
-def split_sentences(text: str) -> List[str]:
-    """
-    Split a text string into a number of sentences using a simple regex
-    """
-    return SENT_REGEX.split(text)
-
-
-def overlap(a: List[str], b: List[str], threshold: int = 3) -> int:
+def ngram_overlaps(a: List[str], b: List[str], threshold: int = 3) -> List[int]:
     """
     Compute the set over overlapping strings in each set based on n-gram
     overlap where 'n' is defined by the passed in threshold.
@@ -57,7 +44,7 @@ def overlap(a: List[str], b: List[str], threshold: int = 3) -> int:
         """
         return set(" ".join(g) for g in grouper(text.split(), threshold))
 
-    sentence_overlaps = 0
+    overlaps = []
     remaining = set(range(len(b)))
     for text in a:
         best_idx = -1
@@ -70,7 +57,7 @@ def overlap(a: List[str], b: List[str], threshold: int = 3) -> int:
                 best_overlap = ngram_overlap
 
         if best_idx >= 0:
-            sentence_overlaps += 1
+            overlaps.append(best_idx)
             remaining.remove(best_idx)
 
-    return sentence_overlaps
+    return overlaps

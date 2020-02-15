@@ -2,7 +2,7 @@
 This router handles the stories endpoints.
 """
 from difflib import Differ
-from typing import Tuple
+from typing import Dict, Tuple
 from itertools import groupby
 
 from databases import Database
@@ -12,8 +12,9 @@ from starlette.templating import Jinja2Templates
 
 from woolgatherer.db.session import get_db
 from woolgatherer.db.utils import load_query
+from woolgatherer.models.range import split_sentences
 from woolgatherer.utils.routing import CompressibleRoute
-from woolgatherer.utils import split_sentences, overlap
+from woolgatherer.utils import ngram_overlaps
 
 
 router = APIRouter()
@@ -68,14 +69,15 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
 
         finalized_sentences = split_sentences(finalized)
         generated_sentences = split_sentences(generated)
+        overlaps = ngram_overlaps(finalized_sentences, generated_sentences)
 
         edits.append(
             {
                 "diff": diff,
                 "model_name": model_name,
+                "overlaps": len(overlaps),
                 "finalized_sentences": len(finalized_sentences),
                 "generated_sentences": len(generated_sentences),
-                "overlap": overlap(finalized_sentences, generated_sentences),
             }
         )
 
@@ -95,3 +97,33 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
             "suggestion_counts": suggestion_counts,
         },
     )
+
+
+@router.get(
+    "/sentence/histogram",
+    summary="Get the sentence histogram",
+    response_description="A dictionary of mapping sentences number to overlap",
+)
+async def get_sentence_histogram(
+    filtered: bool = False, db: Database = Depends(get_db)
+):
+    """
+    This method returns a template for the main dashboard of the woolgatherer
+    service.
+    """
+    histogram: Dict[int, int] = {}
+    for row in await db.fetch_all(await load_query("finalized_suggestions.sql")):
+        finalized = row["user_text"]
+        generated = row["generated_text"]
+
+        finalized_sentences = split_sentences(finalized)
+        generated_sentences = split_sentences(generated)
+        overlaps = ngram_overlaps(finalized_sentences, generated_sentences)
+
+        if filtered and len(overlaps) == len(generated_sentences):
+            continue
+
+        for idx in overlaps:
+            histogram[idx] = histogram.get(idx, 0) + 1
+
+    return histogram

@@ -11,8 +11,7 @@ from aiohttp import ClientSession, client_exceptions
 from woolgatherer.db.utils import has_postgres
 from woolgatherer.db_models.figmentator import Figmentator
 from woolgatherer.db_models.suggestion import Suggestion
-from woolgatherer.models.range import compute_range
-from woolgatherer.utils.settings import Settings
+from woolgatherer.models.range import compute_next_range
 
 
 # Need both clauses: one to statisfy PostgreSQL and the other for SQLite
@@ -94,17 +93,14 @@ async def figmentate(
         url = URL(figmentator.url)
         url /= f"figment/{suggestion.story_hash}/new"
 
-        computed_range = str(
-            compute_range(
-                suggestion.generated.description or "",
-                **Settings.scene_entry_parameters.dict(),
-            )
+        computed_range = compute_next_range(
+            suggestion.generated.description or "", **suggestion.figment_settings
         )
         logging.info("Posting range: %s", computed_range)
         async with session.post(
             url.with_query(suggestion_type=suggestion.type.value),
             json=suggestion.generated.dict(),
-            headers={"Range": computed_range},
+            headers={"Range": str(computed_range)},
         ) as response:
             return response.status, await response.json()
     except client_exceptions.ClientResponseError as cre:

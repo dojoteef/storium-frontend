@@ -19,6 +19,7 @@ from woolgatherer.db_models.suggestion import (
 )
 from woolgatherer.errors import ProcessingError
 from woolgatherer.tasks import app
+from woolgatherer.models.range import compute_full_range
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.ops import figmentator as figmentator_ops
 from woolgatherer.utils.settings import Settings
@@ -70,18 +71,25 @@ async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
         async with Database(Settings.dsn) as db:
             if status >= 200 and status < 300:
                 try:
+                    # Make sure to trim if necessary
+                    description = entry.get("description", "")
+                    full_range = compute_full_range(**suggestion.figment_settings)
+                    entry["description"] = trimmed = full_range.trim(description)
+
+                    # Then update the currently generated suggestion
                     suggestion.generated = SceneEntry(**entry)
+
                 except ValidationError:
                     raise ProcessingError(
                         "Invalid suggestion received from figmentator!"
                     )
 
-                if status == 200:
+                if status == 200 or trimmed != description:
                     suggestion.status = SuggestionStatus.done
 
                 success = True
                 await suggestion.update(db)
-                if status == 206:
+                if suggestion.status != SuggestionStatus.done:
                     # This indicates we received a partial result, so we need to queue
                     # up another task in order finish generating the suggestion.
                     figmentate.delay(suggestion.dict(), figmentator.dict())

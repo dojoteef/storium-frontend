@@ -4,13 +4,10 @@ Operations which can be conducted on stories
 import logging
 from typing import Any, Dict, Optional
 
-from aiohttp import ClientSession
 from databases import Database
 
 from woolgatherer.db_models.storium import Story, StoryStatus
-from woolgatherer.db_models.suggestion import Suggestion
-from woolgatherer.db_models.figmentator import Figmentator, FigmentatorForStory
-from woolgatherer.db.utils import json_hash
+from woolgatherer.db.utils import json_hash, load_query
 from woolgatherer.errors import InsufficientCapacityError
 from woolgatherer.tasks import stories
 from woolgatherer.ops import figmentator as figmentator_ops
@@ -51,3 +48,9 @@ async def get_story_status(story_hash: str, *, db: Database) -> Optional[StorySt
     logging.debug("Getting story status for story_id: %s", story_hash)
     story = await Story.select(db, "status", {"hash": story_hash})
     return story.status if story else None
+
+
+async def cleanup_stories(*, db: Database):
+    """ Cleanup unused stories """
+    query = await load_query("cleanup_stories.sql")
+    await db.execute(query)

@@ -1,4 +1,5 @@
 #!/bin/sh
 LOGLEVEL="${LOGLEVEL:-info}"
+SCHEDULE_FILE="${SCHEDULE_FILE:-celerybeat-schedule}"
 
-celery worker -A woolgatherer.tasks -l $LOGLEVEL --autoscale=12,3
+celery worker -A woolgatherer.tasks -l $LOGLEVEL --autoscale=12,3 -B -s $SCHEDULE_FILE

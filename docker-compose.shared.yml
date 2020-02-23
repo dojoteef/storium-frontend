@@ -9,6 +9,8 @@ services:
     restart: unless-stopped
   tasks:
     command: gw-tasks
+    environment:
+      - SCHEDULE_FILE=/home/gw/celerybeat-schedule
     depends_on:
       - db
       - queue

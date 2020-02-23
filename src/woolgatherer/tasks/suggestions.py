@@ -10,7 +10,11 @@ from asgiref.sync import async_to_sync
 from celery.utils.log import get_task_logger
 from pydantic import ValidationError
 
-from woolgatherer.db_models.figmentator import Figmentator, FigmentatorForStory
+from woolgatherer.db_models.figmentator import (
+    Figmentator,
+    FigmentatorForStory,
+    FigmentatorStatus,
+)
 from woolgatherer.db_models.storium import Story
 from woolgatherer.db_models.suggestion import (
     Suggestion,
@@ -40,6 +44,7 @@ async def _create(story_id: str, context_hash: str, suggestion_type: SuggestionT
         }
         suggestion, figmentator_mapping = await gather(
             Suggestion.select(db, where=where),
+            # TODO: This won't work when we have multiple suggestion types!
             FigmentatorForStory.select(db, where={"story_hash": story_id}),
         )
 
@@ -54,6 +59,15 @@ async def _create(story_id: str, context_hash: str, suggestion_type: SuggestionT
         )
         if not figmentator:
             raise ProcessingError("Cannot find figmentator")
+
+        if figmentator.status == FigmentatorStatus.inactive:
+            async with ClientSession() as session:
+                figmentator = await figmentator_ops.reassign_figmentator(
+                    suggestion, figmentator, db=db, session=session
+                )
+
+        if not figmentator:
+            raise ProcessingError("Cannot not reassign figmentator")
 
         suggestion.status = SuggestionStatus.executing
         await suggestion.update(db)

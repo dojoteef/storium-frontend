@@ -2,15 +2,17 @@
 Operations on suggestion generators
 """
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from yarl import URL
 from databases import Database
 from aiohttp import ClientSession, client_exceptions
 
 from woolgatherer.db.utils import has_postgres
-from woolgatherer.db_models.figmentator import Figmentator
+from woolgatherer.db_models.figmentator import Figmentator, FigmentatorForStory
+from woolgatherer.db_models.storium import Story, StoryStatus
 from woolgatherer.db_models.suggestion import Suggestion
+from woolgatherer.errors import InsufficientCapacityError
 from woolgatherer.models.range import compute_next_range
 
 
@@ -83,6 +85,46 @@ async def preprocess(
             return response.status == 200, figmentator
     except client_exceptions.ClientError:
         return False, figmentator
+
+
+async def reassign_figmentator(
+    suggestion: Suggestion,
+    figmentator: Figmentator,
+    *,
+    db: Database,
+    session: ClientSession,
+) -> Optional[Figmentator]:
+    """ Reassign the story to a new figmentator for the given suggestion """
+    story = await Story.select(db, where={"hash": suggestion.story_hash})
+    if not story:
+        logging.error("Story %s not found in database!", suggestion.story_hash)
+        return None
+
+    figmentators = [
+        f for f in await select_figmentators(db=db) if f.type == suggestion.type
+    ]
+    if not figmentators:
+        raise InsufficientCapacityError("No preprocessors available")
+
+    story.status = StoryStatus.ready
+    context = {"story_id": story.hash, "story": story.story}
+    completed, new_figmentator = await preprocess(
+        context, figmentators.pop(), session=session
+    )
+    async with db.transaction():
+        if completed:
+            where = {"model_id": figmentator.id, "story_hash": story.hash}
+            await FigmentatorForStory(**where).delete(db, where=where)
+            await FigmentatorForStory(
+                model_id=new_figmentator.id, story_hash=story.hash
+            ).insert(db)
+        else:
+            story.status = StoryStatus.failed
+        await story.update(db)
+
+    logging.info("Reprocessed story=%s, status=%s", story.hash, story.status)
+
+    return new_figmentator
 
 
 async def figmentate(

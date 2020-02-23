@@ -4,9 +4,12 @@ Operations which can be conducted on stories
 import logging
 from typing import Any, Dict, Optional
 
+from aiohttp import ClientSession
 from databases import Database
 
 from woolgatherer.db_models.storium import Story, StoryStatus
+from woolgatherer.db_models.suggestion import Suggestion
+from woolgatherer.db_models.figmentator import Figmentator, FigmentatorForStory
 from woolgatherer.db.utils import json_hash
 from woolgatherer.errors import InsufficientCapacityError
 from woolgatherer.tasks import stories

@@ -230,6 +230,26 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
             )
         )
 
+    async def delete(self, db: Database, *, where: Optional[Dict[str, Any]] = None):
+        """
+        Insert the current model into the db. Make sure to only insert values that have
+        actually been set, or defaults if provided.
+        """
+        table = type(self).__table__
+        query = table.delete()
+
+        if where:
+            clauses = tuple(table.columns[c] == v for c, v in where.items())
+            query = query.where(and_(*clauses))
+        elif self.id is not None:
+            query = query.where(table.columns["id"] == self.id)
+        else:
+            raise InvalidOperationError(
+                f"Cowardly refusing to delete all {type(self).__name__}"
+            )
+
+        await db.execute(query=query)
+
     async def update(
         self,
         db: Database,
@@ -239,7 +259,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
         where: Optional[Dict[str, Any]] = None,
     ):
         """
-        Insert the current model into the db. Make sure to only insert values that have
+        Update the model the db. Make sure to only update values that have
         actually been set, or defaults if provided.
         """
         table = type(self).__table__

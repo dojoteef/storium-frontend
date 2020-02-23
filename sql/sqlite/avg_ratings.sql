@@ -10,6 +10,9 @@ FROM figmentator AS m
     ON s.story_hash = ffs.story_hash
       INNER JOIN feedback AS f
       ON f.suggestion_id = s.uuid
-WHERE f.type IN ('fluency', 'likeability', 'relevance', 'coherence') AND cast(s.finalized AS text) != 'null'
+WHERE
+  f.type IN ('fluency', 'likeability', 'relevance', 'coherence')
+  AND cast(s.finalized AS text) != 'null'
+  AND m.status != 'inactive'
 GROUP BY f.type, m.name
 ORDER BY f.type, avg_rating DESC;

@@ -3,7 +3,12 @@ WITH
   (
     SELECT DISTINCT ON (context->>'user_pid')
       count(context->>'user_pid') AS suggestion_count
-    FROM suggestion
+    FROM suggestion AS sg
+      INNER JOIN figmentator_for_story AS ffs
+      ON sg.story_hash = ffs.story_hash
+        INNER JOIN figmentator AS m
+        ON ffs.model_id = m.id
+    WHERE m.status != 'inactive'
     GROUP BY context->>'user_pid'
   )
   SELECT

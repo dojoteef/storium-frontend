@@ -7,5 +7,7 @@ FROM figmentator AS m
   ON m.id = ffs.model_id
     INNER JOIN suggestion AS s
     ON s.story_hash = ffs.story_hash
-WHERE s.finalized::text != 'null'
+WHERE
+  s.finalized::text != 'null'
+  AND m.status != 'inactive'
 ORDER BY s.context->>'created_at';

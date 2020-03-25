@@ -87,27 +87,58 @@
         </div>
 
         <h2 id="edits">Edited Suggestions</h2>
-        <table id="suggestions-table" class="table table-striped">
+        <table id="suggestions-table" class="table table-striped text-center">
           <thead class="thead-dark">
             <tr>
-              <th class="align-top" scope="col" style="width: 5%">Suggestion</th>
-              <th class="align-top" scope="col" style="width: 15%">Model Name</th>
-              <th class="align-top" scope="col" style="width: 5%">#User Sentences</th>
-              <th class="align-top" scope="col" style="width: 5%">#Suggestion Sentences</th>
-              <th class="align-top" scope="col" style="width: 5%">#Overlapping Sentences</th>
-              <th class="align-top" scope="col" style="width: 65%">Diff</th>
+              <th rowspan="2" class="align-middle" scope="col" style="width: 5%">#</th>
+              <th rowspan="2" class="align-top" scope="col" style="width: 15%">Model</th>
+              <th colspan="3" class="align-top" scope="col" style="width: 15%">#Sentences</th>
+              <th rowspan="2" class="align-middle" scope="col" style="width: 65%">Diff/Comments</th>
+            </tr>
+            <tr>
+              <th class="align-top" scope="col">User</th>
+              <th class="align-top" scope="col">Model</th>
+              <th class="align-top" scope="col">Overlap</th>
             </tr>
           </thead>
           <tbody>
             {% for edit in edits %}
             <tr>
-              <th scope="row"><span class="suggestion-number">{{loop.index}}</span></th>
+              <th scope="row">{{loop.index}}</span></th>
               <td scope="row">{{edit.model_name}}</td>
               <td scope="row">{{edit.finalized_sentences}}</td>
               <td scope="row">{{edit.generated_sentences}}</td>
               <td scope="row">{{edit.overlaps}}</td>
-              <td>
-                {% for type, word in edit.diff %}<span class="{{type}}">{{word}} </span>{% endfor %}
+              <td scope="row" class="text-justify">
+                <div id="accordion">
+                  <div class="card">
+                    <div class="card-header">
+                      <div class="btn-group" data-toggle="buttons">
+                        <button class="btn btn-secondary active" data-toggle="collapse" data-target="#collapseDiff{{loop.index}}">
+                          Diff
+                        </button>
+                        {% if edit.comments is not none %}
+                        <button class="btn btn-secondary collapsed active" data-toggle="collapse" data-target="#collapseComments{{loop.index}}">
+                          Comments
+                        </button>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div id="collapseDiff{{loop.index}}" class="collapse show" data-parent="#accordion">
+                      <div class="card-body">
+                        {% for type, word in edit.diff %}<span class="{{type}}">{{word}} </span>{% endfor %}
+                      </div>
+                    </div>
+                    {% if edit.comments is not none %}
+                    <div id="collapseComments{{loop.index}}" class="collapse show" data-parent="#accordion">
+                      <div class="card-body border-top">
+                        {{edit.comments}}
+                      </div>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+
               </td>
             </tr>
             {% endfor %}

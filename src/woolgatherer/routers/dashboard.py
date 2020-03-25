@@ -60,6 +60,7 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         finalized = row["user_text"]
         generated = row["generated_text"]
         model_name = row["model_name"]
+        comments = row["comments"]
 
         diff = [
             parse_diff(word)
@@ -74,6 +75,7 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         edits.append(
             {
                 "diff": diff,
+                "comments": comments,
                 "model_name": model_name,
                 "overlaps": len(overlaps),
                 "finalized_sentences": len(finalized_sentences),

@@ -1,12 +1,11 @@
 function setupSuggestionsTable() {
   suggestions_table = $("#suggestions-table").DataTable({
     "columnDefs": [
-      {"targets": 5, "orderable": false},
       {"targets": 4, "orderData": 4, "type": "num"},
       {"targets": 3, "orderData": 3, "type": "num"},
       {"targets": 2, "orderData": 2, "type": "num"},
       {"targets": 1, "orderData": [0, 1]},
-      {"targets": 0, "orderData": 0, "type": "html-num"}
+      {"targets": 0, "orderData": 0, "type": "num"}
     ]
   });
 

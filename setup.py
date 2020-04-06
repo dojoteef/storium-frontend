@@ -67,6 +67,8 @@ setup(
     ],
     data_files=DATA_FILES,
     install_requires=[
+        "nltk==3.4.5",
+        "py-rouge==1.1",
         "aiofiles==0.4.0",
         "aiohttp==3.6.2",
         "alembic==1.2.1",

@@ -2,6 +2,8 @@
 Main entry point for woolgatherer. This is where we setup the app.
 """
 import os
+
+import nltk
 from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -22,6 +24,9 @@ app.include_router(suggestions.router, prefix="/suggestions", tags=["suggestions
 
 app.add_event_handler("startup", open_connection_pool)
 app.add_event_handler("shutdown", close_connection_pool)
+
+# Ensure nltk has "punkt" downloaded... it's apparently needed for py-rouge
+app.add_event_handler("startup", lambda: nltk.download("punkt"))
 
 
 @app.exception_handler(InvalidOperationError)

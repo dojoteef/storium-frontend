@@ -1,10 +1,12 @@
 """
 This router handles the stories endpoints.
 """
+import logging
 from difflib import Differ
 from typing import Dict, Tuple
 from itertools import groupby
 
+from rouge import Rouge
 from databases import Database
 from fastapi import APIRouter, Depends
 from starlette.requests import Request
@@ -54,13 +56,47 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
 
         suggestion_counts[c] = result["unique_user_count"]
 
+    ratings = await db.fetch_all(await load_query("avg_ratings.sql"))
+    ratings_by_type = {
+        t: [{k: v for k, v in r.items() if k != "type"} for r in g]
+        for t, g in groupby(ratings, lambda x: x["type"])
+    }
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "ratings": ratings,
+            "ratings_by_type": ratings_by_type,
+            "suggestion_counts": suggestion_counts,
+        },
+    )
+
+
+@router.get("/suggestions", summary="Get suggestions")
+async def get_suggestions(request: Request, db: Database = Depends(get_db)):
+    """
+    This method returns a template for the main dashboard of the woolgatherer
+    service.
+    """
+    logging.error(str(request.query_params.keys()))
     edits = []
     differ = Differ()
+    rouge = Rouge(
+        metrics=["rouge-n", "rouge-l", "rouge-w"],
+        max_n=4,
+        limit_length=False,
+        apply_avg=False,
+        apply_best=False,
+        alpha=0.5,
+        weight_factor=1.2,
+        stemming=True,
+    )
+
     for row in await db.fetch_all(await load_query("finalized_suggestions.sql")):
         finalized = row["user_text"]
         generated = row["generated_text"]
         model_name = row["model_name"]
-        comments = row["comments"]
 
         diff = [
             parse_diff(word)
@@ -72,33 +108,33 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         generated_sentences = split_sentences(generated)
         overlaps = ngram_overlaps(finalized_sentences, generated_sentences)
 
-        edits.append(
-            {
-                "diff": diff,
-                "comments": comments,
-                "model_name": model_name,
-                "overlaps": len(overlaps),
-                "finalized_sentences": len(finalized_sentences),
-                "generated_sentences": len(generated_sentences),
+        edit = {
+            "diff": diff,
+            "model_name": model_name,
+            "overlaps": len(overlaps),
+            "finalized_sentences": len(finalized_sentences),
+            "generated_sentences": len(generated_sentences),
+        }
+
+        for feedback in (
+            "comments",
+            "relevance",
+            "likeability",
+            "fluency",
+            "coherence",
+        ):
+            edit[feedback] = row[feedback]
+
+        scores = rouge.get_scores([finalized], [generated])
+        for score_type in ("l", "w") + tuple(str(i) for i in range(1, rouge.max_n + 1)):
+            edit[f"rouge{score_type}"] = {
+                metric: 100 * scores[f"rouge-{score_type}"][0][metric][0]
+                for metric in ("p", "r", "f")
             }
-        )
 
-    ratings = await db.fetch_all(await load_query("avg_ratings.sql"))
-    ratings_by_type = {
-        t: [{k: v for k, v in r.items() if k != "type"} for r in g]
-        for t, g in groupby(ratings, lambda x: x["type"])
-    }
+        edits.append(edit)
 
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "edits": edits,
-            "request": request,
-            "ratings": ratings,
-            "ratings_by_type": ratings_by_type,
-            "suggestion_counts": suggestion_counts,
-        },
-    )
+    return edits
 
 
 @router.get(

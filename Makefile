@@ -10,7 +10,7 @@ venv:
 	echo "deactivate" > .deactivate.sh
 
 install: venv
-	. venv/bin/activate; pip install -e .[sqlite]
+	. venv/bin/activate; pip install -e .[sqlite,scipy]
 
 dev-install: install requirements-dev.txt
 	. venv/bin/activate; pip install -r requirements-dev.txt

@@ -53,4 +53,9 @@ async def get_story_status(story_hash: str, *, db: Database) -> Optional[StorySt
 async def cleanup_stories(*, db: Database):
     """ Cleanup unused stories """
     query = await load_query("cleanup_stories.sql")
-    await db.execute(query)
+
+    # Because encode/databases uses a fetch (which causes a prepared statement
+    # error in PostgreSQL since the query has multiple statements) rather than
+    # an execute when calling db.execute, need to use db.execute_many instead
+    # since it actually does an execute.
+    await db.execute_many(query, [None])

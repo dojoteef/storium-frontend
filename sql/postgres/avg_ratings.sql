@@ -2,6 +2,7 @@ SELECT
   f.type,
   m.name AS model_name,
   round(avg(f.response::int), 2) AS avg_rating,
+  round(stddev(f.response::int), 2) AS rating_stddev,
   count(m.name) AS feedback_count
 FROM figmentator AS m
   INNER JOIN figmentator_for_story AS ffs

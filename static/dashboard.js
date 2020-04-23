@@ -1,7 +1,5 @@
 function setupSuggestionsTable() {
   suggestions_table = $("#suggestions-table").DataTable({
-    "serverSide": true,
-    "ajax": "/dashboard/suggestions",
     "columnDefs": [
       // Suggestion #
       {"targets": 0, "orderData": 0, "type": "num", "searchable": false},
@@ -27,10 +25,7 @@ function setupSuggestionsTable() {
       // Rouge F1
       {"targets": 11, "orderData": 11, "type": "num", "visible": false, "searchable": false},
       {"targets": 12, "orderData": 12, "type": "num", "visible": false, "searchable": false},
-      {"targets": 13, "orderData": 13, "type": "num", "visible": false, "searchable": false},
-
-      // Diff/Comments
-      {"targets": 14, "orderable": false}
+      {"targets": 13, "orderData": 13, "type": "num", "visible": false, "searchable": false}
     ]
   });
 
@@ -67,6 +62,10 @@ function setupSuggestionsTable() {
   select.append($('<option value="precision">Precision</option>'));
   select.append($('<option value="recall">Recall</option>'));
   select.append($('<option value="f1">F1</option>'));
+
+  suggestions_table.rows().every(function () {
+    this.child($('#accordion'+(this.index()+1)).show()).show();
+  });
 
   // Finally reveal the table since it has been properly setup
   $("#suggestions-table").removeClass("invisible");

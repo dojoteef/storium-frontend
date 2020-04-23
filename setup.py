@@ -8,6 +8,7 @@ from setuptools import setup, find_packages
 
 
 EXTRAS_REQUIRE = {}
+EXTRAS_REQUIRE["scipy"] = ["scipy==1.3.3"]
 EXTRAS_REQUIRE["sqlite"] = ["aiosqlite==0.10.0"]
 EXTRAS_REQUIRE["postgresql"] = ["asyncpg==0.20.0", "psycopg2==2.8.4"]
 

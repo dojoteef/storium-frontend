@@ -34,6 +34,7 @@
             <tr>
               <th scope="col">Model Name</th>
               <th scope="col">Average Rating</th>
+              <th scope="col">Standard Deviation</th>
               <th scope="col">Feedback Count</th>
             </tr>
           </thead>
@@ -42,12 +43,41 @@
             <tr>
               <td>{{rating.model_name}}</td>
               <td>{{rating.avg_rating}}</td>
+              <td>{{rating.rating_stddev}}</td>
               <td>{{rating.feedback_count}}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
         {% endfor %}
+        </div>
+
+        <h2 id="rouge-correlations">Rouge and Rating Correlations</h2>
+        <div class="container-fluid">
+        <table id="rouge-correlations-table" name="rouge-correlations-table" class="table table-striped">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col"></th>
+              {% for x, row in correlations.items() %}
+              <th scope="col" class="text-capitalize">{{x}}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for x, row in correlations.items() %}
+            <tr>
+              <td class="bg-dark font-weight-bold text-white text-capitalize">{{x}}</td>
+              {% for _ in range(loop.index) %}
+              <td>&mdash;</td>
+              {% endfor %}
+              {% for y, correlation in row.items() %}
+              <td>{{correlation}}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        * p &lt; 0.05, ** p &lt; 0.01
         </div>
 
         <h2 id="unique-users">Unique Users</h2>
@@ -86,16 +116,15 @@
           </div>
         </div>
 
-        {% set rouge_types = ('rouge4', 'rougel', 'rougew') %}
+        {% set rouge_types = ('rouge-4', 'rouge-l', 'rouge-w') %}
         <h2 id="edits">Edited Suggestions</h2>
-        <table id="suggestions-table" class="table table-striped text-center invisible">
+        <table id="suggestions-table" class="table table-striped text-center invisible" style="width:100%">
           <thead class="thead-dark">
             <tr>
-              <th rowspan="2" class="align-middle" scope="col" style="width: 5%">#</th>
-              <th rowspan="2" class="align-top" scope="col" style="width: 15%">Model</th>
-              <th colspan="3" class="align-top" scope="col" style="width: 15%">#Sentences</th>
-              <th colspan="9" class="align-top" scope="col" style="width: 15%" id="rouge">Rouge</th>
-              <th rowspan="2" class="align-middle" scope="col" style="width: 50%">Diff/Comments/Ratings</th>
+              <th rowspan="2" class="align-middle" scope="col">#</th>
+              <th rowspan="2" class="align-top" scope="col">Model</th>
+              <th colspan="3" class="align-top" scope="col">#Sentences</th>
+              <th colspan="9" class="align-top" scope="col" id="rouge">Rouge</th>
             </tr>
             <tr>
               <th class="align-top" scope="col">User</th>
@@ -109,7 +138,6 @@
             </tr>
           </thead>
           <tbody>
-            <!--
             {% for edit in edits %}
             <tr>
               <th scope="row">{{loop.index}}</span></th>
@@ -124,52 +152,48 @@
               </td>
               {% endfor %}
               {% endfor %}
-              <td scope="row" class="text-justify">
-                <div id="accordion{{loop.index}}">
-                  <div class="card">
-                    <div class="card-header">
-                      <div class="btn-toolbar" role="toolbar">
-                        <div class="btn-group btn-group-toggle mr-2" data-toggle="buttons">
-                          <label class="btn btn-secondary active">
-                            <input type="radio" name="options" id="showDiff" autocomplete="off" data-toggle="collapse" data-target="#diff{{loop.index}}" checked>
-                            Diff
-                          </label>
-                          {% if edit.comments is not none %}
-                          <label class="btn btn-secondary">
-                            <input type="radio" name="options" id="showComments" autocomplete="off" data-toggle="collapse" data-target="#comments{{loop.index}}">
-                            Comments
-                          </label>
-                          {% endif %}
-                        </div>
-                        <ul class="list-group list-group-horizontal align-middle">
-                          <button class="list-group-item btn-sm py-0 px-2" disabled>Fluency: {{edit.fluency}}</button>
-                          <button class="list-group-item btn-sm py-0 px-2" disabled>Relevance: {{edit.relevance}}</button>
-                          <button class="list-group-item btn-sm py-0 px-2" disabled>Coherence: {{edit.coherence}}</button>
-                          <button class="list-group-item btn-sm py-0 px-2" disabled>Likeability: {{edit.likeability}}</button>
-                        </ul>
-                      </div>
+            </tr>
+            <div id="accordion{{loop.index}}" style="display: none">
+              <div class="card">
+                <div class="card-header">
+                  <div class="btn-toolbar" role="toolbar">
+                    <div class="btn-group btn-group-toggle mr-2" data-toggle="buttons">
+                      <label class="btn btn-secondary active">
+                        <input type="radio" name="options" id="showDiff" autocomplete="off" data-toggle="collapse" data-target="#diff{{loop.index}}" checked>
+                        Diff
+                      </label>
+                      {% if edit.comments is not none %}
+                      <label class="btn btn-secondary">
+                        <input type="radio" name="options" id="showComments" autocomplete="off" data-toggle="collapse" data-target="#comments{{loop.index}}">
+                        Comments
+                      </label>
+                      {% endif %}
                     </div>
-                    <div id="diff{{loop.index}}" class="collapse show" data-parent="#accordion{{loop.index}}">
-                      <div class="card-body">
-                        <div style="max-height: 17.5em; overflow: scroll">
-                        {% for type, word in edit.diff %}<span class="{{type}}">{{word}} </span>{% endfor %}
-                        </div>
-                      </div>
-                    </div>
-                    {% if edit.comments is not none %}
-                    <div id="comments{{loop.index}}" class="collapse" data-parent="#accordion{{loop.index}}">
-                      <div class="card-body border-top">
-                        {{edit.comments}}
-                      </div>
-                    </div>
-                    {% endif %}
+                    <ul class="list-group list-group-horizontal align-middle">
+                      <button class="list-group-item btn-sm py-0 px-2" disabled>Fluency: {{edit.fluency}}</button>
+                      <button class="list-group-item btn-sm py-0 px-2" disabled>Relevance: {{edit.relevance}}</button>
+                      <button class="list-group-item btn-sm py-0 px-2" disabled>Coherence: {{edit.coherence}}</button>
+                      <button class="list-group-item btn-sm py-0 px-2" disabled>Likeability: {{edit.likeability}}</button>
+                    </ul>
                   </div>
                 </div>
-
-              </td>
-            </tr>
+                <div id="diff{{loop.index}}" class="collapse show" data-parent="#accordion{{loop.index}}">
+                  <div class="card-body">
+                    <div style="max-height: 17.5em; overflow: scroll">
+                    {% for type, word in edit.diff %}<span class="{{type}}">{{word}} </span>{% endfor %}
+                    </div>
+                  </div>
+                </div>
+                {% if edit.comments is not none %}
+                <div id="comments{{loop.index}}" class="collapse" data-parent="#accordion{{loop.index}}">
+                  <div class="card-body border-top">
+                    {{edit.comments}}
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
             {% endfor %}
-            -->
           </tbody>
         </table>
       </main>

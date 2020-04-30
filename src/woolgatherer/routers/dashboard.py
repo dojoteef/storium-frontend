@@ -2,13 +2,14 @@
 This router handles the stories endpoints.
 """
 import os
-from difflib import Differ
-from typing import Dict, Tuple
+import logging
+from difflib import Differ, SequenceMatcher
+from typing import Dict, List, Set, Tuple
 from itertools import combinations, groupby
 
 import aiofiles
-from nltk import word_tokenize
 from rouge import Rouge
+from nltk import word_tokenize
 from databases import Database
 from fastapi import APIRouter, Depends
 from scipy.stats import pearsonr
@@ -25,35 +26,112 @@ from woolgatherer.utils import ngram_overlaps
 router = APIRouter()
 router.route_class = CompressibleRoute
 
+stopwords: Set[str] = set()
 templates = Jinja2Templates(directory="templates")
 
-
-def parse_diff(text: str) -> Tuple[str, str]:
-    """
-    Return the op code and text as a tuple.
-    """
-    if text.startswith("- "):
-        text_class = "table-danger"
-    elif text.startswith("+ "):
-        text_class = "table-success"
-    elif text.startswith("  "):
-        text_class = "table-default"
-    else:
-        raise ValueError(f"Unknown op code for text: {text}")
-
-    return (text_class, text[2:])
+differ = Differ()
+rouge = Rouge(
+    metrics=["rouge-n", "rouge-l", "rouge-w"],
+    max_n=4,
+    limit_length=False,
+    apply_avg=False,
+    apply_best=False,
+    alpha=0.5,
+    weight_factor=1.2,
+    stemming=False,
+)
 
 
-async def remove_stopwords(text: str) -> str:
-    """ Remove stop words from the given text """
+async def load_stopwords():
+    """ Load the stopword list """
     async with aiofiles.open(
         os.path.join("static", "stopwords.txt"), "rt"
     ) as stopword_file:
-        stopwords = set(l.strip() for l in await stopword_file.readlines())
+        stopwords.update(l.strip() for l in await stopword_file.readlines())
 
-    return " ".join(
-        token for token in word_tokenize(text) if token.lower() not in stopwords
+
+def get_diff_score(
+    hypothesis: str, reference: str
+) -> Tuple[List[Tuple[str, str]], Dict[str, float]]:
+    """
+    Return the op code and text as a tuple.
+    """
+
+    def get_substring(text: str, text_lc: str, start: int, tokens) -> Tuple[str, int]:
+        """ Get the original substring from the text for the given sequence of tokens """
+        token = ""
+        end = start
+        for token in tokens:
+            end = text_lc.find(token, end)
+        end += len(token)
+
+        return text[start:end], end
+
+    score = 0.0
+    reference_index = 0
+    hypothesis_index = 0
+    reference_lc = reference.lower()
+    hypothesis_lc = hypothesis.lower()
+    reference_tokens = rouge._preprocess_summary_as_a_whole(reference)[0].split()
+    hypothesis_tokens = rouge._preprocess_summary_as_a_whole(hypothesis)[0].split()
+
+    diffs: List[Tuple[str, str]] = []
+    matcher = SequenceMatcher(isjunk=None, a=hypothesis_tokens, b=reference_tokens)
+    for tag, alo, ahi, blo, bhi in matcher.get_opcodes():
+        if tag == "equal":
+            diff_text, hypothesis_index = get_substring(
+                hypothesis, hypothesis_lc, hypothesis_index, hypothesis_tokens[alo:ahi]
+            )
+            diff_text, reference_index = get_substring(
+                reference, reference_lc, reference_index, reference_tokens[blo:bhi]
+            )
+            diff_class = "table-default"
+            if any(
+                token.lower() not in stopwords for token in hypothesis_tokens[alo:ahi]
+            ):
+                diff_class = "table-warning"
+                logging.fatal(hypothesis_tokens[alo:ahi])
+                score += ahi - alo
+
+            diffs.append((diff_class, diff_text))
+        else:
+            if tag == "delete":
+                diff_text, hypothesis_index = get_substring(
+                    hypothesis,
+                    hypothesis_lc,
+                    hypothesis_index,
+                    hypothesis_tokens[alo:ahi],
+                )
+                diffs.append(("table-danger", diff_text))
+            elif tag == "insert":
+                diff_text, reference_index = get_substring(
+                    reference, reference_lc, reference_index, reference_tokens[blo:bhi]
+                )
+                diffs.append(("table-success", diff_text))
+            elif tag == "replace":
+                diff_text, hypothesis_index = get_substring(
+                    hypothesis,
+                    hypothesis_lc,
+                    hypothesis_index,
+                    hypothesis_tokens[alo:ahi],
+                )
+                diffs.append(("table-danger", diff_text))
+                diff_text, reference_index = get_substring(
+                    reference, reference_lc, reference_index, reference_tokens[blo:bhi]
+                )
+                diffs.append(("table-success", diff_text))
+
+    return (
+        diffs,
+        rouge._compute_p_r_f_score(
+            len(hypothesis_tokens), len(reference_tokens), score
+        ),
     )
+
+
+def remove_stopwords(text: str) -> List[str]:
+    """ Remove stop words from the given text """
+    return [token for token in word_tokenize(text) if token.lower() not in stopwords]
 
 
 @router.get("/", summary="Get the main dashboard for the woolgatherer service")
@@ -72,17 +150,6 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         suggestion_counts[c] = result["unique_user_count"]
 
     edits = []
-    differ = Differ()
-    rouge = Rouge(
-        metrics=["rouge-n", "rouge-l", "rouge-w"],
-        max_n=4,
-        limit_length=False,
-        apply_avg=False,
-        apply_best=False,
-        alpha=0.5,
-        weight_factor=1.2,
-        stemming=True,
-    )
     ratings: Dict[str, Dict[int, float]] = {
         "relevance": {},
         "likeability": {},
@@ -94,6 +161,7 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         "rouge-4": {},
         "rouge-l": {},
         "rouge-w": {},
+        "rouge-d": {},
     }
 
     for idx, row in enumerate(
@@ -103,11 +171,7 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         generated = row["generated_text"]
         model_name = row["model_name"]
 
-        diff = [
-            parse_diff(word)
-            for word in differ.compare(generated.split(), finalized.split())
-            if word[0] != "?"
-        ]
+        diff, diff_score = get_diff_score(generated, finalized)
 
         finalized_sentences = split_sentences(finalized)
         generated_sentences = split_sentences(generated)
@@ -134,7 +198,8 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
                 ratings[feedback][idx] = float(rating)
 
         scores = rouge.get_scores(
-            [await remove_stopwords(generated)], [await remove_stopwords(finalized)]
+            [" ".join(remove_stopwords(generated))],
+            [" ".join(remove_stopwords(finalized))],
         )
         for score_type in ("l", "w") + tuple(str(i) for i in range(1, rouge.max_n + 1)):
             rouge_type = f"rouge-{score_type}"
@@ -144,6 +209,13 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
             }
             if rouge_type in ratings:
                 ratings[rouge_type][idx] = scores[rouge_type][0]["p"][0]
+
+        rouge_type = "rouge-d"
+        edit[rouge_type] = {
+            metric: 100 * diff_score[metric] for metric in ("p", "r", "f")
+        }
+        if rouge_type in ratings:
+            ratings[rouge_type][idx] = diff_score["p"]
 
         edits.append(edit)
 

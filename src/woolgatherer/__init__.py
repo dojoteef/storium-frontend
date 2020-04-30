@@ -27,6 +27,7 @@ app.add_event_handler("shutdown", close_connection_pool)
 
 # Ensure nltk has "punkt" downloaded... it's apparently needed for py-rouge
 app.add_event_handler("startup", lambda: nltk.download("punkt"))
+app.add_event_handler("startup", dashboard.load_stopwords)
 
 
 @app.exception_handler(InvalidOperationError)

@@ -16,16 +16,19 @@ function setupSuggestionsTable() {
       {"targets": 5, "orderData": 5, "type": "num", "visible": false, "searchable": false},
       {"targets": 6, "orderData": 6, "type": "num", "visible": false, "searchable": false},
       {"targets": 7, "orderData": 7, "type": "num", "visible": false, "searchable": false},
+      {"targets": 8, "orderData": 8, "type": "num", "visible": false, "searchable": false},
 
       // Rouge Recall
-      {"targets": 8, "orderData": 8, "type": "num", "visible": false, "searchable": false},
       {"targets": 9, "orderData": 9, "type": "num", "visible": false, "searchable": false},
       {"targets": 10, "orderData": 10, "type": "num", "visible": false, "searchable": false},
-
-      // Rouge F1
       {"targets": 11, "orderData": 11, "type": "num", "visible": false, "searchable": false},
       {"targets": 12, "orderData": 12, "type": "num", "visible": false, "searchable": false},
-      {"targets": 13, "orderData": 13, "type": "num", "visible": false, "searchable": false}
+
+      // Rouge F1
+      {"targets": 13, "orderData": 13, "type": "num", "visible": false, "searchable": false},
+      {"targets": 14, "orderData": 14, "type": "num", "visible": false, "searchable": false},
+      {"targets": 15, "orderData": 15, "type": "num", "visible": false, "searchable": false},
+      {"targets": 16, "orderData": 16, "type": "num", "visible": false, "searchable": false}
     ]
   });
 

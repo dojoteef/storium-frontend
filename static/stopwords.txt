@@ -21,9 +21,9 @@ can
 could
 d
 did
-didn't
+didn
 do
-don't
+don
 down
 even
 eyes
@@ -40,16 +40,16 @@ has
 have
 he
 head
-he'll
+he
 her
 here
 him
 his
 how
 i
-i'd
+i
 if
-i'll
+i
 in
 into
 is
@@ -58,6 +58,7 @@ just
 know
 like
 little
+ll
 look
 looked
 m
@@ -88,7 +89,7 @@ s
 said
 see
 she
-she'll
+she
 so
 some
 something
@@ -114,7 +115,7 @@ was
 way
 we
 well
-we'll
+we
 were
 what
 when

@@ -1,7 +1,7 @@
 SELECT
   m.name AS model_name,
-  s.generated->>'description' AS generated_text,
-  s.finalized->>'description' AS user_text,
+  sg.generated->>'description' AS generated_text,
+  sg.finalized->>'description' AS user_text,
   fm.response AS comments,
   ff.response AS fluency,
   fl.response AS likeability,
@@ -11,24 +11,28 @@ FROM figmentator AS m
   INNER JOIN figmentator_for_story AS ffs
   ON m.id = ffs.model_id
 
-  INNER JOIN suggestion AS s
-  ON s.story_hash = ffs.story_hash
+  INNER JOIN suggestion AS sg
+  ON sg.story_hash = ffs.story_hash
+
+  INNER JOIN story AS s
+  ON sg.story_hash = s.hash
 
   LEFT OUTER JOIN feedback AS fm
-  ON s.uuid = fm.suggestion_id AND fm.type::text = 'comments'
+  ON sg.uuid = fm.suggestion_id AND fm.type::text = 'comments'
 
   LEFT OUTER JOIN feedback AS ff
-  ON s.uuid = ff.suggestion_id AND ff.type::text = 'fluency'
+  ON sg.uuid = ff.suggestion_id AND ff.type::text = 'fluency'
 
   LEFT OUTER JOIN feedback AS fl
-  ON s.uuid = fl.suggestion_id AND fl.type::text = 'likeability'
+  ON sg.uuid = fl.suggestion_id AND fl.type::text = 'likeability'
 
   LEFT OUTER JOIN feedback AS fr
-  ON s.uuid = fr.suggestion_id AND fr.type::text = 'relevance'
+  ON sg.uuid = fr.suggestion_id AND fr.type::text = 'relevance'
 
   LEFT OUTER JOIN feedback AS fc
-  ON s.uuid = fc.suggestion_id AND fc.type::text = 'coherence'
+  ON sg.uuid = fc.suggestion_id AND fc.type::text = 'coherence'
 WHERE
-  s.finalized::text != 'null'
+  sg.finalized::text != 'null'
   AND m.status != 'inactive'
-ORDER BY s.context->>'created_at';
+  AND s.story->>'game_pid' != ALL(:blacklist)
+ORDER BY sg.context->>'created_at';

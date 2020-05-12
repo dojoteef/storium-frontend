@@ -2,7 +2,6 @@
 This router handles the stories endpoints.
 """
 import os
-import logging
 from difflib import Differ, SequenceMatcher
 from typing import Dict, List, Set, Tuple
 from itertools import combinations, groupby
@@ -50,6 +49,18 @@ async def load_stopwords():
         stopwords.update(l.strip() for l in await stopword_file.readlines())
 
 
+async def get_finalized_suggestions(db: Database):
+    """ Load the finalized suggestions """
+    async with aiofiles.open(
+        os.path.join("static", "game_blacklist.txt"), "rt"
+    ) as blacklist_file:
+        blacklist = [l.strip() for l in await blacklist_file.readlines()]
+
+    return await db.fetch_all(
+        await load_query("finalized_suggestions.sql"), {"blacklist": blacklist}
+    )
+
+
 def get_diff_score(
     hypothesis: str, reference: str
 ) -> Tuple[List[Tuple[str, str]], Dict[str, float]]:
@@ -57,6 +68,7 @@ def get_diff_score(
     Return the op code and text as a tuple.
     """
 
+    # pylint:disable=protected-access
     def get_substring(text: str, text_lc: str, start: int, tokens) -> Tuple[str, int]:
         """ Get the original substring from the text for the given sequence of tokens """
         token = ""
@@ -90,7 +102,6 @@ def get_diff_score(
                 token.lower() not in stopwords for token in hypothesis_tokens[alo:ahi]
             ):
                 diff_class = "table-warning"
-                logging.fatal(hypothesis_tokens[alo:ahi])
                 score += ahi - alo
 
             diffs.append((diff_class, diff_text))
@@ -127,6 +138,7 @@ def get_diff_score(
             len(hypothesis_tokens), len(reference_tokens), score
         ),
     )
+    # pylint:enable=protected-access
 
 
 def remove_stopwords(text: str) -> List[str]:
@@ -164,12 +176,27 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         "rouge-d": {},
     }
 
-    for idx, row in enumerate(
-        await db.fetch_all(await load_query("finalized_suggestions.sql"))
-    ):
+    ratings_by_model: Dict[str, Dict[str, Dict[int, float]]] = {}
+    for idx, row in enumerate(await get_finalized_suggestions(db)):
         finalized = row["user_text"]
         generated = row["generated_text"]
         model_name = row["model_name"]
+        model_ratings = ratings_by_model.get(
+            model_name,
+            {
+                "relevance": {},
+                "likeability": {},
+                "fluency": {},
+                "coherence": {},
+                "rouge-1": {},
+                "rouge-2": {},
+                "rouge-3": {},
+                "rouge-4": {},
+                "rouge-l": {},
+                "rouge-w": {},
+                "rouge-d": {},
+            },
+        )
 
         diff, diff_score = get_diff_score(generated, finalized)
 
@@ -196,6 +223,9 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
             edit[feedback] = rating
             if rating and feedback in ratings:
                 ratings[feedback][idx] = float(rating)
+                model_feedback = model_ratings.get(feedback, {})
+                model_feedback[idx] = float(rating)
+                model_ratings[feedback] = model_feedback
 
         scores = rouge.get_scores(
             [" ".join(remove_stopwords(generated))],
@@ -208,16 +238,25 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
                 for metric in ("p", "r", "f")
             }
             if rouge_type in ratings:
-                ratings[rouge_type][idx] = scores[rouge_type][0]["p"][0]
+                precision = scores[rouge_type][0]["p"][0]
+                ratings[rouge_type][idx] = precision
+                model_scores = model_ratings.get(rouge_type, {})
+                model_scores[idx] = precision
+                model_ratings[rouge_type] = model_scores
 
         rouge_type = "rouge-d"
         edit[rouge_type] = {
             metric: 100 * diff_score[metric] for metric in ("p", "r", "f")
         }
         if rouge_type in ratings:
-            ratings[rouge_type][idx] = diff_score["p"]
+            precision = diff_score["p"]
+            ratings[rouge_type][idx] = precision
+            model_scores = model_ratings.get(rouge_type, {})
+            model_scores[idx] = precision
+            model_ratings[rouge_type] = model_scores
 
         edits.append(edit)
+        ratings_by_model[model_name] = model_ratings
 
     correlations: Dict[str, Dict[str, str]] = {k: {} for k in ratings}
     for (k1, v1), (k2, v2) in combinations(ratings.items(), 2):
@@ -229,6 +268,22 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
         if p < 0.01:
             correlation += "*"
         correlations[k1][k2] = correlation
+
+    correlations_by_model: Dict[str, Dict[str, Dict[str, str]]] = {
+        model_name: {k: {} for k in ratings} for model_name in ratings_by_model
+    }
+    for model_name, model_ratings in ratings_by_model.items():
+        for (k1, v1), (k2, v2) in combinations(model_ratings.items(), 2):
+            r, p = pearsonr(
+                [v1[k] for k in v2 if k in v1], [v2[k] for k in v1 if k in v2]
+            )
+
+            correlation = f"{r:.2f}"
+            if p < 0.05:
+                correlation += "*"
+            if p < 0.01:
+                correlation += "*"
+            correlations_by_model[model_name][k1][k2] = correlation
 
     avg_ratings = await db.fetch_all(await load_query("avg_ratings.sql"))
     ratings_by_type = {
@@ -243,6 +298,7 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
             "request": request,
             "ratings": avg_ratings,
             "correlations": correlations,
+            "correlations_by_model": correlations_by_model,
             "ratings_by_type": ratings_by_type,
             "suggestion_counts": suggestion_counts,
         },
@@ -262,7 +318,7 @@ async def get_sentence_histogram(
     service.
     """
     histogram: Dict[int, int] = {}
-    for row in await db.fetch_all(await load_query("finalized_suggestions.sql")):
+    for idx, row in enumerate(await get_finalized_suggestions(db)):
         finalized = row["user_text"]
         generated = row["generated_text"]
 

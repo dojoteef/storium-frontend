@@ -147,8 +147,51 @@ function setupSentenceHistogram() {
   }
 }
 
+function setupJudgmentsButton() {
+  var httpRequest;
+
+  $("#judgementCSV").click(
+    function () {
+      makeRequest();
+    });
+
+  function makeRequest() {
+    httpRequest = new XMLHttpRequest();
+    if (!httpRequest) {
+      alert("Cannot contact server!");
+      return false;
+    }
+    $(this).disabled = true;
+    httpRequest.onreadystatechange = downloadCSV;
+    httpRequest.open('GET', '/dashboard/judgement/contexts');
+    httpRequest.send();
+  }
+
+  function downloadCSV() {
+    $(this).disabled = false;
+    if (httpRequest.readyState != XMLHttpRequest.DONE) {
+      return;
+    }
+
+    if (httpRequest.status != 200) {
+      alert("Invalid response from server!");
+      return;
+    }
+
+    var csv = new Blob([httpRequest.responseText], {type: 'text/plain'});
+    var url = window.URL.createObjectURL(csv);
+    var link = document.createElement("a");
+    link.download = "judgement_contexts.csv";
+    link.href = url;
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  }
+}
+
 $(document).ready(function () {
   setupRatingsTables();
   setupSuggestionsTable();
   setupSentenceHistogram();
+  setupJudgmentsButton();
 });

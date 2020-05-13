@@ -140,10 +140,15 @@
                 <canvas id="sentenceHistogram" width="400" height="400"></canvas>
               </div>
               <div class="row justify-content-center">
-                <button id="sentenceHistogramFilter" type="button" class="btn btn-light" title="Filter out unmodified suggestions">Filter Unmodified</button>
+                <button id="sentenceHistogramFilter" type="button" class="btn btn-secondary" title="Filter out unmodified suggestions">Filter Unmodified</button>
               </div>
             </div>
           </div>
+        </div>
+
+        <h2>Collect Judgements</h2>
+        <div class="container">
+          <button id="judgementCSV" type="button" class="btn btn-secondary" title="Generate judgement csv file">Generate Judgement CSV</button>
         </div>
 
         {% set rouge_types = ('rouge-4', 'rouge-l', 'rouge-w', 'rouge-d') %}

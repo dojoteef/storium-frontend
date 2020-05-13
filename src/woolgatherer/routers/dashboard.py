@@ -66,7 +66,7 @@ async def get_finalized_suggestions(db: Database):
     )
 
 
-async def select_judgement_contexts(db: Database):
+async def select_judgement_contexts(db: Database, limit: int = 100):
     """ Load the finalized suggestions """
     async with aiofiles.open(
         os.path.join("static", "game_blacklist.txt"), "rt"
@@ -74,7 +74,8 @@ async def select_judgement_contexts(db: Database):
         blacklist = [l.strip() for l in await blacklist_file.readlines()]
 
     return await db.fetch_all(
-        await load_query("judgement_contexts.sql"), {"blacklist": blacklist}
+        await load_query("judgement_contexts.sql"),
+        {"blacklist": blacklist, "limit": limit},
     )
 
 

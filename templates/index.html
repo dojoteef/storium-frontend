@@ -129,10 +129,12 @@
           </tbody>
         </table>
 
-        <h2>Histogram of Sentence Overlap</h2>
         <div class="container">
-          <div class="row">
-            <div class="col-sm-3">
+          <div class="row justify-content-between">
+            <div class="col-4-lg col-3-md col-2-sm">
+              <div class="row justify-content-center">
+                <h2>Histogram of Sentence Overlaps</h2>
+              </div>
               <div class="row justify-content-center">
                 <span id="sentenceHistogramCount" class="alert alert-dark" disabled>Total Overlaps:</span>
               </div>
@@ -143,12 +145,16 @@
                 <button id="sentenceHistogramFilter" type="button" class="btn btn-secondary" title="Filter out unmodified suggestions">Filter Unmodified</button>
               </div>
             </div>
-          </div>
-        </div>
 
-        <h2>Collect Judgements</h2>
-        <div class="container">
-          <button id="judgementCSV" type="button" class="btn btn-secondary" title="Generate judgement csv file">Generate Judgement CSV</button>
+            <div class="col-4-lg col-3-md col-2-sm">
+              <div class="row justify-content-center">
+                <h2>Collect Judgements</h2>
+              </div>
+              <div class="row justify-content-center">
+                <button id="judgementCSV" type="button" class="btn btn-secondary" title="Generate judgement csv file">Generate Judgement CSV</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {% set rouge_types = ('rouge-4', 'rouge-l', 'rouge-w', 'rouge-d') %}

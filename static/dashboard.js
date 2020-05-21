@@ -162,29 +162,36 @@ function setupJudgmentsButton() {
       return false;
     }
 
-    // Must open the GET request before setting headers
-    httpRequest.open('GET', '/dashboard/judgement/contexts');
-    httpRequest.setRequestHeader('Accept-Encoding', 'gzip');
+    var spinner = $('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>')
+      .appendTo(
+        element
+      )
+    text = element.children().first().detach()
 
+    // Must open the GET request before setting headers
+    httpRequest.open('GET', '/dashboard/judgement/contexts?limit=100');
     if (element.prop('id') == 'judgementCSV') {
       httpRequest.setRequestHeader('Accept', 'text/csv');
-      httpRequest.onreadystatechange = downloadJudgements(element, 'csv');
+      httpRequest.onreadystatechange = downloadJudgements(element, spinner, text, 'csv');
     }
     else if (element.prop('id') == 'judgementJSON') {
       httpRequest.setRequestHeader('Accept', 'text/json');
-      httpRequest.onreadystatechange = downloadJudgements(element, 'json');
+      httpRequest.onreadystatechange = downloadJudgements(element, spinner, text, 'json');
     }
 
     element.prop('disabled', true);
     httpRequest.send();
   }
 
-  function downloadJudgements(element, ext) {
+  function downloadJudgements(element, spinner, text, ext) {
     return function() {
-      element.prop('disabled', false);
       if (httpRequest.readyState != XMLHttpRequest.DONE) {
         return;
       }
+
+      spinner.remove()
+      text.appendTo(element)
+      element.prop('disabled', false);
 
       if (httpRequest.status != 200) {
         alert("Invalid response from server!");

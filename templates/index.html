@@ -150,14 +150,20 @@
               <div class="row justify-content-center">
                 <h2>Export Judgement Contexts</h2>
               </div>
-              <div class="row justify-content-center">
-                <div class="list-group list-group-horizontal">
-                  <button id="judgementCSV" type="button" class="judgements list-group-item list-group-item-action list-group-item-secondary" title="Generate judgement csv file">
-                    <span>CSV</span>
-                  </button>
-                  <button id="judgementJSON" type="button" class="judgements list-group-item list-group-item-action list-group-item-secondary" title="Generate judgement json file">
-                    <span>JSON</span>
-                  </button>
+              <div class="d-flex flex-row justify-content-center">
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-default">Limit per Model</span>
+                  </div>
+                  <input id="judgementCount" type="number" value="100" style="text-align:right; width:6em">
+                  <div class="input-group-append">
+                    <button id="judgementCSV" type="button" class="judgements btn btn-secondary" title="Generate judgement csv file">
+                      <span>CSV</span>
+                    </button>
+                    <button id="judgementJSON" type="button" class="judgements btn btn-secondary" title="Generate judgement json file">
+                      <span>JSON</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

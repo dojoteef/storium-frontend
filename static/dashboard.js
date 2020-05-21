@@ -148,9 +148,7 @@ function setupSentenceHistogram() {
 }
 
 function setupJudgmentsButton() {
-  var httpRequest;
-
-  $(".judgements.list-group-item-action").click(
+  $(".judgements.btn").click(
     function () {
       makeRequest($(this));
     });
@@ -169,21 +167,21 @@ function setupJudgmentsButton() {
     text = element.children().first().detach()
 
     // Must open the GET request before setting headers
-    httpRequest.open('GET', '/dashboard/judgement/contexts?limit=100');
+    httpRequest.open('GET', '/dashboard/judgement/contexts?limit=' + $('#judgementCount').val());
     if (element.prop('id') == 'judgementCSV') {
       httpRequest.setRequestHeader('Accept', 'text/csv');
-      httpRequest.onreadystatechange = downloadJudgements(element, spinner, text, 'csv');
+      httpRequest.onreadystatechange = downloadJudgements(httpRequest, element, spinner, text, 'csv');
     }
     else if (element.prop('id') == 'judgementJSON') {
       httpRequest.setRequestHeader('Accept', 'text/json');
-      httpRequest.onreadystatechange = downloadJudgements(element, spinner, text, 'json');
+      httpRequest.onreadystatechange = downloadJudgements(httpRequest, element, spinner, text, 'json');
     }
 
     element.prop('disabled', true);
     httpRequest.send();
   }
 
-  function downloadJudgements(element, spinner, text, ext) {
+  function downloadJudgements(httpRequest, element, spinner, text, ext) {
     return function() {
       if (httpRequest.readyState != XMLHttpRequest.DONE) {
         return;

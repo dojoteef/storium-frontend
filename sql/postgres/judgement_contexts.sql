@@ -43,5 +43,5 @@ FROM (
     AND fc.response IS NOT NULL
   ORDER BY sg.id
 ) AS context
-WHERE context.rno <= :limit
+WHERE context.rno::FLOAT4 <= :limit
 ORDER BY context.model_name;

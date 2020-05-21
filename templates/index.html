@@ -28,7 +28,7 @@
         <h2 id="avg-ratings">Average Ratings</h2>
         <div class="container-fluid">
         {% for type, ratings in ratings_by_type.items() %}
-        <h3 id="avg-{{type}}-rating">{{type.capitalize()}}</h3>
+        <h3 id="avg-{{type}}-rating" class="text-capitalize">{{type}}</h3>
         <table id="avg-{{type}}-table" name="avg-rating-table" class="table table-striped">
           <thead class="thead-dark">
             <tr>
@@ -148,10 +148,13 @@
 
             <div class="col-4-lg col-3-md col-2-sm">
               <div class="row justify-content-center">
-                <h2>Collect Judgements</h2>
+                <h2>Export Judgement Contexts</h2>
               </div>
               <div class="row justify-content-center">
-                <button id="judgementCSV" type="button" class="btn btn-secondary" title="Generate judgement csv file">Generate Judgement CSV</button>
+                <div class="list-group list-group-horizontal">
+                  <button id="judgementCSV" type="button" class="judgements list-group-item list-group-item-action list-group-item-secondary" title="Generate judgement csv file">CSV</button>
+                  <button id="judgementJSON" type="button" class="judgements list-group-item list-group-item-action list-group-item-secondary" title="Generate judgement json file">JSON</button>
+                </div>
               </div>
             </div>
           </div>

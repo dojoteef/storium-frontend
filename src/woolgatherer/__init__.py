@@ -3,20 +3,22 @@ Main entry point for woolgatherer. This is where we setup the app.
 """
 import os
 
-import nltk
 from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.staticfiles import StaticFiles
 from starlette.status import HTTP_403_FORBIDDEN, HTTP_503_SERVICE_UNAVAILABLE
 
 from woolgatherer.errors import InvalidOperationError, InsufficientCapacityError
 from woolgatherer.routers import dashboard, stories, suggestions
+from woolgatherer.metrics import initialize_metrics
 from woolgatherer.db.session import open_connection_pool, close_connection_pool
 
 
 app = FastAPI(debug=bool(int(os.environ.get("DEBUG", 0))))
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(stories.router, prefix="/stories", tags=["stories"])
@@ -25,9 +27,7 @@ app.include_router(suggestions.router, prefix="/suggestions", tags=["suggestions
 app.add_event_handler("startup", open_connection_pool)
 app.add_event_handler("shutdown", close_connection_pool)
 
-# Ensure nltk has "punkt" downloaded... it's apparently needed for py-rouge
-app.add_event_handler("startup", lambda: nltk.download("punkt"))
-app.add_event_handler("startup", dashboard.load_stopwords)
+app.add_event_handler("startup", initialize_metrics)
 
 
 @app.exception_handler(InvalidOperationError)

@@ -150,42 +150,56 @@ function setupSentenceHistogram() {
 function setupJudgmentsButton() {
   var httpRequest;
 
-  $("#judgementCSV").click(
+  $(".judgements.list-group-item-action").click(
     function () {
-      makeRequest();
+      makeRequest($(this));
     });
 
-  function makeRequest() {
+  function makeRequest(element) {
     httpRequest = new XMLHttpRequest();
     if (!httpRequest) {
       alert("Cannot contact server!");
       return false;
     }
-    $(this).disabled = true;
-    httpRequest.onreadystatechange = downloadCSV;
+
+    // Must open the GET request before setting headers
     httpRequest.open('GET', '/dashboard/judgement/contexts');
+    httpRequest.setRequestHeader('Accept-Encoding', 'gzip');
+
+    if (element.prop('id') == 'judgementCSV') {
+      httpRequest.setRequestHeader('Accept', 'text/csv');
+      httpRequest.onreadystatechange = downloadJudgements(element, 'csv');
+    }
+    else if (element.prop('id') == 'judgementJSON') {
+      httpRequest.setRequestHeader('Accept', 'text/json');
+      httpRequest.onreadystatechange = downloadJudgements(element, 'json');
+    }
+
+    element.prop('disabled', true);
     httpRequest.send();
   }
 
-  function downloadCSV() {
-    $(this).disabled = false;
-    if (httpRequest.readyState != XMLHttpRequest.DONE) {
-      return;
-    }
+  function downloadJudgements(element, ext) {
+    return function() {
+      element.prop('disabled', false);
+      if (httpRequest.readyState != XMLHttpRequest.DONE) {
+        return;
+      }
 
-    if (httpRequest.status != 200) {
-      alert("Invalid response from server!");
-      return;
-    }
+      if (httpRequest.status != 200) {
+        alert("Invalid response from server!");
+        return;
+      }
 
-    var csv = new Blob([httpRequest.responseText], {type: 'text/plain'});
-    var url = window.URL.createObjectURL(csv);
-    var link = document.createElement("a");
-    link.download = "judgement_contexts.csv";
-    link.href = url;
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+      var output = new Blob([httpRequest.responseText], {type: 'text/plain'});
+      var url = window.URL.createObjectURL(output);
+      var link = document.createElement("a");
+      link.download = "judgement_contexts." + ext;
+      link.href = url;
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    }
   }
 }
 

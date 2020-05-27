@@ -4,36 +4,39 @@ function setupSuggestionsTable() {
       // Suggestion #
       {"targets": 0, "orderData": 0, "type": "num", "searchable": false},
 
+      // Game PID
+      {"targets": 1, "orderData": 1, "searchable": true},
+
       // Model
-      {"targets": 1, "orderData": [0, 1]},
+      {"targets": 2, "orderData": [0, 2]},
 
       // Sentence stats
-      {"targets": 2, "orderData": 2, "type": "num", "searchable": false},
       {"targets": 3, "orderData": 3, "type": "num", "searchable": false},
       {"targets": 4, "orderData": 4, "type": "num", "searchable": false},
+      {"targets": 5, "orderData": 5, "type": "num", "searchable": false},
 
       // Rouge Precision
-      {"targets": 5, "orderData": 5, "type": "num", "visible": false, "searchable": false},
       {"targets": 6, "orderData": 6, "type": "num", "visible": false, "searchable": false},
       {"targets": 7, "orderData": 7, "type": "num", "visible": false, "searchable": false},
       {"targets": 8, "orderData": 8, "type": "num", "visible": false, "searchable": false},
+      {"targets": 9, "orderData": 9, "type": "num", "visible": false, "searchable": false},
 
       // Rouge Recall
-      {"targets": 9, "orderData": 9, "type": "num", "visible": false, "searchable": false},
       {"targets": 10, "orderData": 10, "type": "num", "visible": false, "searchable": false},
       {"targets": 11, "orderData": 11, "type": "num", "visible": false, "searchable": false},
       {"targets": 12, "orderData": 12, "type": "num", "visible": false, "searchable": false},
+      {"targets": 13, "orderData": 13, "type": "num", "visible": false, "searchable": false},
 
       // Rouge F1
-      {"targets": 13, "orderData": 13, "type": "num", "visible": false, "searchable": false},
       {"targets": 14, "orderData": 14, "type": "num", "visible": false, "searchable": false},
       {"targets": 15, "orderData": 15, "type": "num", "visible": false, "searchable": false},
-      {"targets": 16, "orderData": 16, "type": "num", "visible": false, "searchable": false}
+      {"targets": 16, "orderData": 16, "type": "num", "visible": false, "searchable": false},
+      {"targets": 17, "orderData": 17, "type": "num", "visible": false, "searchable": false}
     ]
   });
 
   // Create the select list and search operation
-  model_column = suggestions_table.column(1);
+  model_column = suggestions_table.column(2);
   var select = $('<select class="custom-select custom-select-sm form-control form-control-sm" />')
     .appendTo(
       model_column.header()
@@ -95,13 +98,23 @@ function setupSentenceHistogram() {
   var graphData = {
     datasets: [{
       label: "Position of sentence overlaps",
-      borderWidth: 1
+      borderWidth: 1,
+      backgroundColor: "rgba(0, 0, 255, 0.4)"
     }]
   };
 
   var histogram = new Chart("sentenceHistogram", {
     type: 'bar',
-    data: graphData
+    data: graphData,
+    options: {
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
   });
 
   // Make an initial request to setup the histogram
@@ -120,8 +133,10 @@ function setupSentenceHistogram() {
       var exportableHistogram = new Chart(svgContext, {
         type: 'bar',
         data: histogram.data,
-        // deactivate responsiveness and animation
-        options: {"responsive": false, "animation": false}
+        options: Object.assign(
+          // deactivate responsiveness and animation
+          {}, histogram.options, {"responsive": false, "animation": false}
+        )
       });
 
       var output = new Blob([svgContext.getSerializedSvg()], {type: 'text/plain'});
@@ -166,7 +181,7 @@ function setupSentenceHistogram() {
     );
 
     // Then update the histogram
-    histogram.data.labels = Object.keys(response);
+    histogram.data.labels = Object.keys(response).map((num) => Number(num) + 1);
     histogram.data.datasets[0].data = Object.values(response);
     histogram.update();
   }

@@ -1,5 +1,6 @@
 SELECT
   m.name AS model_name,
+  s.story->>'game_pid' AS game_pid,
   sg.generated->>'description' AS generated_text,
   sg.finalized->>'description' AS user_text,
   fm.response AS comments,

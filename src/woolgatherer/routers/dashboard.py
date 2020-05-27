@@ -115,6 +115,7 @@ async def get_dashboard(
         finalized = row["user_text"]
         generated = row["generated_text"]
         model_name = row["model_name"]
+        game_pid = row["game_pid"]
         model_ratings = ratings_by_model.get(
             model_name,
             {
@@ -140,6 +141,7 @@ async def get_dashboard(
 
         edit = {
             "diff": diff,
+            "game_pid": game_pid,
             "model_name": model_name,
             "overlaps": len(overlaps),
             "finalized_sentences": len(finalized_sentences),

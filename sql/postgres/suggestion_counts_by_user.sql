@@ -8,7 +8,7 @@ WITH
       ON sg.story_hash = ffs.story_hash
         INNER JOIN figmentator AS m
         ON ffs.model_id = m.id
-    WHERE m.status != 'inactive'
+    WHERE :status @> array[m.status]
     GROUP BY context->>'user_pid'
   )
   SELECT

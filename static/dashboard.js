@@ -92,14 +92,16 @@ function setupSentenceHistogram() {
   var httpRequest;
   var filtered = false;
 
+  var graphData = {
+    datasets: [{
+      label: "Position of sentence overlaps",
+      borderWidth: 1
+    }]
+  };
+
   var histogram = new Chart("sentenceHistogram", {
     type: 'bar',
-    data: {
-      datasets: [{
-        label: "Position of sentence overlaps",
-        borderWidth: 1
-      }]
-    }
+    data: graphData
   });
 
   // Make an initial request to setup the histogram
@@ -112,14 +114,37 @@ function setupSentenceHistogram() {
       makeRequest();
     });
 
+  $("#sentenceHistogramExport").click(
+    function () {
+      var svgContext = C2S(400, 400);
+      var exportableHistogram = new Chart(svgContext, {
+        type: 'bar',
+        data: histogram.data,
+        // deactivate responsiveness and animation
+        options: {"responsive": false, "animation": false}
+      });
+
+      var output = new Blob([svgContext.getSerializedSvg()], {type: 'text/plain'});
+      var url = window.URL.createObjectURL(output);
+      var link = document.createElement("a");
+      link.download = "sentence_histogram.svg";
+      link.href = url;
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    });
+
   function makeRequest() {
     httpRequest = new XMLHttpRequest();
     if (!httpRequest) {
       alert("Cannot contact server!");
       return false;
     }
+
+    urlParams = new URLSearchParams(window.location.search);
+    urlParams.append('filtered', filtered)
     httpRequest.onreadystatechange = setupHistogram;
-    httpRequest.open('GET', '/dashboard/sentence/histogram?filtered=' + filtered);
+    httpRequest.open('GET', '/dashboard/sentence/histogram?' + urlParams.toString());
     httpRequest.send();
   }
 

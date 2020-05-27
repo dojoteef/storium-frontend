@@ -17,6 +17,7 @@
     <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/v/bs4/jq-3.3.1/dt-1.10.20/datatables.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', path='/canvas2svg.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', path='/dashboard.js') }}"></script>
 
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
@@ -142,7 +143,10 @@
                 <canvas id="sentenceHistogram" width="400" height="400"></canvas>
               </div>
               <div class="row justify-content-center">
-                <button id="sentenceHistogramFilter" type="button" class="btn btn-secondary" title="Filter out unmodified suggestions">Filter Unmodified</button>
+                <div class="button-group">
+                  <button id="sentenceHistogramFilter" type="button" class="btn btn-secondary" title="Filter out unmodified suggestions">Filter Unmodified</button>
+                  <button id="sentenceHistogramExport" type="button" class="btn btn-secondary" title="Export chart to SVG">Export</button>
+                </div>
               </div>
             </div>
 

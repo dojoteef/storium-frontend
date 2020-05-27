@@ -33,6 +33,6 @@ FROM figmentator AS m
   ON sg.uuid = fc.suggestion_id AND fc.type::text = 'coherence'
 WHERE
   sg.finalized::text != 'null'
-  AND m.status != 'inactive'
+  AND :status @> array[m.status]
   AND s.story->>'game_pid' != ALL(:blacklist)
 ORDER BY sg.context->>'created_at';

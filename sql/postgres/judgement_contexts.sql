@@ -35,7 +35,7 @@ FROM (
     ON sg.uuid = fc.suggestion_id AND fc.type::text = 'coherence'
   WHERE
     sg.finalized::text != 'null'
-    AND m.status != 'inactive'
+    AND :status @> array[m.status]
     AND s.story->>'game_pid' != ALL(:blacklist)
     AND ff.response IS NOT NULL
     AND fl.response IS NOT NULL

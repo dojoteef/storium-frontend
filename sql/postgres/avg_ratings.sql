@@ -14,6 +14,6 @@ FROM figmentator AS m
 WHERE
   array['fluency', 'likeability', 'relevance', 'coherence']::feedbacktype[] @> array[f.type]
   AND s.finalized::text != 'null'
-  AND m.status != 'inactive'
+  AND :status @> array[m.status]
 GROUP BY f.type, m.name
 ORDER BY f.type, avg_rating DESC;

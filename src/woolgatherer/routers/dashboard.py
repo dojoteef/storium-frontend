@@ -7,7 +7,7 @@ import csv
 import json
 import logging
 import statistics
-from typing import Any, AsyncGenerator, Dict, Mapping
+from typing import Any, AsyncGenerator, Dict, Mapping, Sequence
 from itertools import combinations, groupby
 
 import aiofiles
@@ -21,6 +21,7 @@ from starlette.status import HTTP_406_NOT_ACCEPTABLE
 
 from woolgatherer.db.session import get_db
 from woolgatherer.db.utils import load_query
+from woolgatherer.db_models.figmentator import FigmentatorStatus
 from woolgatherer.metrics import get_diff_score, remove_stopwords, rouge
 from woolgatherer.models.range import split_sentences
 from woolgatherer.utils.routing import CompressibleRoute
@@ -33,7 +34,9 @@ router.route_class = CompressibleRoute
 templates = Jinja2Templates(directory="templates")
 
 
-async def get_finalized_suggestions(db: Database) -> AsyncGenerator[Mapping, None]:
+async def get_finalized_suggestions(
+    db: Database, status: Sequence[FigmentatorStatus] = (FigmentatorStatus.active,)
+) -> AsyncGenerator[Mapping, None]:
     """ Load the finalized suggestions """
     async with aiofiles.open(
         os.path.join("static", "game_blacklist.txt"), "rt"
@@ -41,13 +44,16 @@ async def get_finalized_suggestions(db: Database) -> AsyncGenerator[Mapping, Non
         blacklist = [l.strip() for l in await blacklist_file.readlines()]
 
     async for row in db.iterate(
-        await load_query("finalized_suggestions.sql"), {"blacklist": blacklist}
+        await load_query("finalized_suggestions.sql"),
+        {"status": status, "blacklist": blacklist},
     ):
         yield row
 
 
 async def select_judgement_contexts(
-    db: Database, limit: int = 0
+    db: Database,
+    limit: int = 0,
+    status: Sequence[FigmentatorStatus] = (FigmentatorStatus.active,),
 ) -> AsyncGenerator[Mapping, None]:
     """ Load the finalized suggestions """
     async with aiofiles.open(
@@ -57,13 +63,21 @@ async def select_judgement_contexts(
 
     async for row in db.iterate(
         await load_query("judgement_contexts.sql"),
-        {"blacklist": blacklist, "limit": float("inf") if not limit else limit},
+        {
+            "status": status,
+            "blacklist": blacklist,
+            "limit": float("inf") if not limit else limit,
+        },
     ):
         yield row
 
 
 @router.get("/", summary="Get the main dashboard for the woolgatherer service")
-async def get_dashboard(request: Request, db: Database = Depends(get_db)):
+async def get_dashboard(
+    request: Request,
+    status: FigmentatorStatus = FigmentatorStatus.active,
+    db: Database = Depends(get_db),
+):
     """
     This method returns a template for the main dashboard of the woolgatherer
     service.
@@ -71,7 +85,9 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
     query = await load_query("suggestion_counts_by_user.sql")
     suggestion_counts = {}
     for c in [1, 5, 10, 20, float("inf")]:
-        result = await db.fetch_one(query, values={"suggestion_count": c})
+        result = await db.fetch_one(
+            query, values={"suggestion_count": c, "status": (status,)}
+        )
         if not result:
             continue
 
@@ -94,7 +110,7 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
 
     idx = -1
     ratings_by_model: Dict[str, Dict[str, Dict[int, float]]] = {}
-    async for row in get_finalized_suggestions(db):
+    async for row in get_finalized_suggestions(db, status=(status,)):
         idx += 1
         finalized = row["user_text"]
         generated = row["generated_text"]
@@ -204,7 +220,9 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
                 correlation += "*"
             correlations_by_model[model_name][k1][k2] = correlation
 
-    avg_ratings = await db.fetch_all(await load_query("avg_ratings.sql"))
+    avg_ratings = await db.fetch_all(
+        await load_query("avg_ratings.sql"), {"status": (status,)}
+    )
     for key in ("l", "w", "d") + tuple(str(i) for i in range(1, rouge.max_n + 1)):
         key = f"rouge-{key}"
         for model_name, model_ratings in ratings_by_model.items():
@@ -246,14 +264,16 @@ async def get_dashboard(request: Request, db: Database = Depends(get_db)):
     response_description="A dictionary of mapping sentences number to overlap",
 )
 async def get_sentence_histogram(
-    filtered: bool = False, db: Database = Depends(get_db)
+    filtered: bool = False,
+    status: FigmentatorStatus = FigmentatorStatus.active,
+    db: Database = Depends(get_db),
 ):
     """
     This method returns a template for the main dashboard of the woolgatherer
     service.
     """
     histogram: Dict[int, int] = {}
-    async for row in get_finalized_suggestions(db):
+    async for row in get_finalized_suggestions(db, status=(status,)):
         finalized = row["user_text"]
         generated = row["generated_text"]
 
@@ -277,7 +297,10 @@ async def get_sentence_histogram(
     response_class=PlainTextResponse,
 )
 async def get_judgement_contexts(
-    limit: int = 0, accept: str = Header(None), db: Database = Depends(get_db)
+    limit: int = 0,
+    status: FigmentatorStatus = FigmentatorStatus.active,
+    accept: str = Header(None),
+    db: Database = Depends(get_db),
 ):
     """
     This method returns a template for the main dashboard of the woolgatherer
@@ -289,15 +312,17 @@ async def get_judgement_contexts(
         accept = "text/csv"
 
     if accept == "text/csv":
-        return await get_judgement_contexts_csv(db, limit=limit)
+        return await get_judgement_contexts_csv(db, limit=limit, status=status)
 
     if accept == "text/json":
-        return await get_judgement_contexts_json(db, limit=limit)
+        return await get_judgement_contexts_json(db, limit=limit, status=status)
 
     raise HTTPException(HTTP_406_NOT_ACCEPTABLE, f"Invalid Accept Header: {accept}!")
 
 
-async def get_judgement_contexts_csv(db: Database, limit: int = 0):
+async def get_judgement_contexts_csv(
+    db: Database, status: FigmentatorStatus, limit: int = 0
+):
     """ Get judgement contexts as CSV """
 
     def create_csv_row():
@@ -327,7 +352,7 @@ async def get_judgement_contexts_csv(db: Database, limit: int = 0):
         writer.writeheader()
         yield csv_row.getvalue()
 
-        async for row in select_judgement_contexts(db, limit=limit):
+        async for row in select_judgement_contexts(db, limit=limit, status=(status,)):
             csv_row, writer = create_csv_row()
             story = json.loads(row["story"])
             generated = json.loads(row["generated"])
@@ -384,14 +409,16 @@ async def get_judgement_contexts_csv(db: Database, limit: int = 0):
     return StreamingResponse(get_as_csv(), media_type="text/csv")
 
 
-async def get_judgement_contexts_json(db: Database, limit: int = 0):
+async def get_judgement_contexts_json(
+    db: Database, status: FigmentatorStatus, limit: int = 0
+):
     """ Get judgement contexts as JSON """
 
     async def get_as_json():
         """ Iteratively yield JSON """
         yield "["
         idx = -1
-        async for row in select_judgement_contexts(db, limit=limit):
+        async for row in select_judgement_contexts(db, limit=limit, status=(status,)):
             idx += 1
             story = json.loads(row["story"])
             finalized = json.loads(row["finalized"])

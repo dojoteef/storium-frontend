@@ -130,46 +130,44 @@
           </tbody>
         </table>
 
-        <div class="container">
-          <div class="row justify-content-between">
-            <div class="col-4-lg col-3-md col-2-sm">
-              <div class="row justify-content-center">
-                <h2>Histogram of Sentence Overlaps</h2>
+        <h2>Histogram of Sentence Overlaps</h2>
+        <div class="container px-sm-3 px-md-4 px-lg-5">
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 mx-sm-n3 mx-md-n4 mx-lg-n5 align-items-end">
+            {% for model in models %}
+            <div class="col py-3 px-sm-3 px-md-4 px-lg-5 sentence-histogram" name="{{model}}">
+              <div class="row justify-content-center" style="text-align: center;">
+                <b>{{model}}</b>
               </div>
               <div class="row justify-content-center">
-                <span id="sentenceHistogramCount" class="alert alert-dark" disabled>Total Overlaps:</span>
+                <span class="alert alert-dark histogram-count" disabled>Total Overlaps:</span>
               </div>
               <div class="row justify-content-center">
-                <canvas id="sentenceHistogram" width="400" height="400"></canvas>
+                <canvas class="histogram-canvas" width="400" height="400"></canvas>
               </div>
               <div class="row justify-content-center">
                 <div class="button-group">
-                  <button id="sentenceHistogramFilter" type="button" class="btn btn-secondary" title="Filter out unmodified suggestions">Filter Unmodified</button>
-                  <button id="sentenceHistogramExport" type="button" class="btn btn-secondary" title="Export chart to SVG">Export</button>
+                  <button type="button" class="btn btn-secondary histogram-export" title="Export chart to SVG">Export</button>
                 </div>
               </div>
             </div>
+            {% endfor %}
+          </div>
+        </div>
 
-            <div class="col-4-lg col-3-md col-2-sm">
-              <div class="row justify-content-center">
-                <h2>Export Judgement Contexts</h2>
-              </div>
-              <div class="d-flex flex-row justify-content-center">
-                <div class="input-group">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text" id="inputGroup-sizing-default">Limit per Model</span>
-                  </div>
-                  <input id="judgementCount" type="number" value="0" style="text-align:right; width:6em">
-                  <div class="input-group-append">
-                    <button id="judgementCSV" type="button" class="judgements btn btn-secondary" title="Generate judgement csv file">
-                      <span>CSV</span>
-                    </button>
-                    <button id="judgementJSON" type="button" class="judgements btn btn-secondary" title="Generate judgement json file">
-                      <span>JSON</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+        <h2>Export Judgement Contexts</h2>
+        <div class="d-flex flex-row justify-content-center">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="inputGroup-sizing-default">Limit per Model</span>
+            </div>
+            <input id="judgementCount" type="number" value="0" style="text-align:right; width:6em">
+            <div class="input-group-append">
+              <button id="judgementCSV" type="button" class="judgements btn btn-secondary" title="Generate judgement csv file">
+                <span>CSV</span>
+              </button>
+              <button id="judgementJSON" type="button" class="judgements btn btn-secondary" title="Generate judgement json file">
+                <span>JSON</span>
+              </button>
             </div>
           </div>
         </div>

@@ -109,13 +109,17 @@ async def get_dashboard(
     }
 
     idx = -1
+    all_models = set()
     ratings_by_model: Dict[str, Dict[str, Dict[int, float]]] = {}
     async for row in get_finalized_suggestions(db, status=(status,)):
         idx += 1
+        game_pid = row["game_pid"]
         finalized = row["user_text"]
         generated = row["generated_text"]
         model_name = row["model_name"]
-        game_pid = row["game_pid"]
+
+        all_models.add(model_name)
+
         model_ratings = ratings_by_model.get(
             model_name,
             {
@@ -174,7 +178,7 @@ async def get_dashboard(
                 for metric in ("p", "r", "f")
             }
             if rouge_type in ratings:
-                precision = scores[rouge_type][0]["p"][0]
+                precision = 100 * scores[rouge_type][0]["p"][0]
                 ratings[rouge_type][idx] = precision
                 model_scores = model_ratings.get(rouge_type, {})
                 model_scores[idx] = precision
@@ -185,7 +189,7 @@ async def get_dashboard(
             metric: 100 * diff_score[metric] for metric in ("p", "r", "f")
         }
         if rouge_type in ratings:
-            precision = diff_score["p"]
+            precision = 100 * diff_score["p"]
             ratings[rouge_type][idx] = precision
             model_scores = model_ratings.get(rouge_type, {})
             model_scores[idx] = precision
@@ -251,6 +255,7 @@ async def get_dashboard(
         {
             "edits": edits,
             "request": request,
+            "models": all_models,
             "ratings": avg_ratings,
             "correlations": correlations,
             "correlations_by_model": correlations_by_model,
@@ -266,7 +271,7 @@ async def get_dashboard(
     response_description="A dictionary of mapping sentences number to overlap",
 )
 async def get_sentence_histogram(
-    filtered: bool = False,
+    model: str = None,
     status: FigmentatorStatus = FigmentatorStatus.active,
     db: Database = Depends(get_db),
 ):
@@ -276,15 +281,16 @@ async def get_sentence_histogram(
     """
     histogram: Dict[int, int] = {}
     async for row in get_finalized_suggestions(db, status=(status,)):
+        # TODO: It would be better to have this filtering in SQL
+        if model and model != row["model_name"]:
+            continue
+
         finalized = row["user_text"]
         generated = row["generated_text"]
 
         finalized_sentences = split_sentences(finalized)
         generated_sentences = split_sentences(generated)
         overlaps = ngram_overlaps(finalized_sentences, generated_sentences)
-
-        if filtered and len(overlaps) == len(generated_sentences):
-            continue
 
         for idx in overlaps:
             histogram[idx] = histogram.get(idx, 0) + 1

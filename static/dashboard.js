@@ -92,99 +92,93 @@ function setupRatingsTables() {
 }
 
 function setupSentenceHistogram() {
-  var httpRequest;
-  var filtered = false;
+  $(".sentence-histogram").each(function() {
+    var graphData = {
+      datasets: [{
+        label: "Position of sentence overlaps",
+        borderWidth: 1,
+        backgroundColor: "rgba(0, 0, 255, 0.4)"
+      }]
+    };
 
-  var graphData = {
-    datasets: [{
-      label: "Position of sentence overlaps",
-      borderWidth: 1,
-      backgroundColor: "rgba(0, 0, 255, 0.4)"
-    }]
-  };
+    var model_name = $(this).attr("name");
+    var count = $(".histogram-count", this);
+    var canvas = $(".histogram-canvas", this);
+    var exportButton = $(".histogram-export", this);
 
-  var histogram = new Chart("sentenceHistogram", {
-    type: 'bar',
-    data: graphData,
-    options: {
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          }
-        }]
+    var histogram = new Chart(canvas, {
+      type: 'bar',
+      data: graphData,
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true
+            }
+          }]
+        }
       }
-    }
-  });
-
-  // Make an initial request to setup the histogram
-  makeRequest();
-
-  $("#sentenceHistogramFilter").click(
-    function () {
-      filtered = !filtered;
-      $(this).text(filtered ? "Show All" : "Filter Unmodified");
-      makeRequest();
     });
 
-  $("#sentenceHistogramExport").click(
-    function () {
-      var svgContext = C2S(400, 400);
-      var exportableHistogram = new Chart(svgContext, {
-        type: 'bar',
-        data: histogram.data,
-        options: Object.assign(
-          // deactivate responsiveness and animation
-          {}, histogram.options, {"responsive": false, "animation": false}
-        )
+    exportButton.click(
+      function () {
+        var svgContext = C2S(400, 400);
+        var exportableHistogram = new Chart(svgContext, {
+          type: 'bar',
+          data: histogram.data,
+          options: Object.assign(
+            // deactivate responsiveness and animation
+            {}, histogram.options, {"responsive": false, "animation": false}
+          )
+        });
+
+        var output = new Blob([svgContext.getSerializedSvg()], {type: 'text/plain'});
+        var url = window.URL.createObjectURL(output);
+        var link = document.createElement("a");
+        link.download = "sentence_histogram.svg";
+        link.href = url;
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
       });
 
-      var output = new Blob([svgContext.getSerializedSvg()], {type: 'text/plain'});
-      var url = window.URL.createObjectURL(output);
-      var link = document.createElement("a");
-      link.download = "sentence_histogram.svg";
-      link.href = url;
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    });
-
-  function makeRequest() {
-    httpRequest = new XMLHttpRequest();
+    // Make the requests to setup the histograms
+    var httpRequest = new XMLHttpRequest();
     if (!httpRequest) {
       alert("Cannot contact server!");
       return false;
     }
 
     urlParams = new URLSearchParams(window.location.search);
-    urlParams.append('filtered', filtered)
+    urlParams.append("model", model_name);
+
     httpRequest.onreadystatechange = setupHistogram;
     httpRequest.open('GET', '/dashboard/sentence/histogram?' + urlParams.toString());
     httpRequest.send();
-  }
 
-  function setupHistogram() {
-    if (httpRequest.readyState != XMLHttpRequest.DONE) {
-      return;
+    function setupHistogram() {
+      if (httpRequest.readyState != XMLHttpRequest.DONE) {
+        return;
+      }
+
+      if (httpRequest.status != 200) {
+        alert("Invalid response from server!");
+        return;
+      }
+
+      var response = JSON.parse(httpRequest.responseText);
+
+      // Setup the overlap heading
+      count.text(
+        "Total Overlaps: " + Object.values(response).reduce((a, b) => a + b, 0)
+      );
+
+      // Then update the histogram
+      histogram.data.labels = Object.keys(response).map((num) => Number(num) + 1);
+      histogram.data.datasets[0].data = Object.values(response);
+      histogram.update();
     }
-
-    if (httpRequest.status != 200) {
-      alert("Invalid response from server!");
-      return;
-    }
-
-    var response = JSON.parse(httpRequest.responseText);
-
-    // Setup the overlap heading
-    $("#sentenceHistogramCount").text(
-      "Total Overlaps: " + Object.values(response).reduce((a, b) => a + b, 0)
-    );
-
-    // Then update the histogram
-    histogram.data.labels = Object.keys(response).map((num) => Number(num) + 1);
-    histogram.data.datasets[0].data = Object.values(response);
-    histogram.update();
-  }
+  });
 }
 
 function setupJudgmentsButton() {

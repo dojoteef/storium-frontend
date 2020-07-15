@@ -13,7 +13,7 @@ from celery.utils.log import get_task_logger
 from woolgatherer.db_models.storium import Story, StoryStatus
 from woolgatherer.db_models.figmentator import Figmentator, FigmentatorForStory
 from woolgatherer.ops import figmentator as figmentator_ops
-from woolgatherer.ops import stories as story_ops
+from woolgatherer.ops import stories as story_ops  # pylint:disable=cyclic-import
 from woolgatherer.tasks import app
 from woolgatherer.utils.settings import Settings
 

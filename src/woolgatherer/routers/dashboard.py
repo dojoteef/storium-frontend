@@ -72,6 +72,8 @@ async def select_judgement_contexts(
         yield row
 
 
+# TODO: refactor to make this function more modular
+# pylint:disable=too-many-locals
 @router.get("/", summary="Get the main dashboard for the woolgatherer service")
 async def get_dashboard(
     request: Request,
@@ -265,6 +267,9 @@ async def get_dashboard(
     )
 
 
+# pylint:enable=too-many-locals
+
+
 @router.get(
     "/sentence/histogram",
     summary="Get the sentence histogram",
@@ -316,7 +321,7 @@ async def get_judgement_contexts(
     """
     # Default to the text/csv
     accept = accept or "text/csv"
-    if accept == "*/*" or accept == "text/*":
+    if accept in ("*/*", "text/*"):
         accept = "text/csv"
 
     if accept == "text/csv":

@@ -27,9 +27,9 @@ def grouper(iterable, n, fillvalue=None, padded=False):  # pylint:disable=invali
     if padded:
         # keep the fill value
         return groups
-    else:
-        # ignore the fill value
-        return [[x for x in group if x is not fillvalue] for group in groups]
+
+    # ignore the fill value
+    return [[x for x in group if x is not fillvalue] for group in groups]
 
 
 def ngram_overlaps(a: List[str], b: List[str], threshold: int = 3) -> List[int]:

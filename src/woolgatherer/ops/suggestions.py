@@ -45,8 +45,8 @@ async def get_or_create_suggestion(
             logging.debug("Started task %s", task.id)
 
             return suggestion, Settings.user_feedback
-        else:
-            return suggestion, Settings.user_feedback
+
+        return suggestion, Settings.user_feedback
 
     logging.debug("Creating suggestion for story_id: %s", story_hash)
     suggestion = Suggestion(

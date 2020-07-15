@@ -83,7 +83,7 @@ async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
         )
         logger.debug("Received figmentator response (status=%s)", status)
         async with Database(Settings.dsn) as db:
-            if status >= 200 and status < 300:
+            if 200 <= status < 300:
                 try:
                     # Make sure to trim if necessary
                     description = entry.get("description", "")

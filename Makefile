@@ -1,3 +1,5 @@
+username = $(shell whoami)
+
 .PHONY: test $(wildcard build-%) $(wildcard shutdown-%) \
 	$(wildcard deploy-%) $(wildcard redeploy-%)
 
@@ -9,46 +11,48 @@ venv:
 	ls .activate.sh > /dev/null || ln -s venv/bin/activate .activate.sh
 	echo "deactivate" > .deactivate.sh
 
-install: venv
-	. venv/bin/activate; pip install -e .[sqlite,scipy]
+venv-base: venv
+	. venv/bin/activate; pip install -e .[sqlite,scipy,build]
 
-dev-install: install requirements-dev.txt
+venv-dev: venv-base requirements-dev.txt
 	. venv/bin/activate; pip install -r requirements-dev.txt
 
-lint: dev-install
+lint: venv-dev
 	. venv/bin/activate; mypy src && pylint src
 
-test: dev-install
+test: venv-dev
 	. venv/bin/activate; coverage run -m pytest -v
 
 clean:
 	rm -rf venv .pytest_cache .activate.sh .mypy_cache
 	find . -iname "*.pyc" -delete
 
-build-%: src docker-compose.shared.yml docker-compose.%.yml
-	test -d build/$* && rm -rf build/$* || true
-	mkdir -p build/$*
+buildvars-%:
+	$(eval build_tag = $(*:dev=dev-$(username)))
+	$(eval build_dir = build/$(build_tag))
+	$(eval project_name = woolgatherer_$(build_tag))
+
+build-%: venv-base buildvars-% src docker-compose.shared.yml docker-compose.%.yml
+	test -d $(build_dir) && rm -rf $(build_dir) || true
+	mkdir -p $(build_dir)
 	docker-compose \
-		$$(test -f docker-compose.env.yml && echo -f docker-compose.env.yml || echo "") \
 		-f docker-compose.shared.yml \
 		-f docker-compose.$*.yml \
-		config > build/$*/docker-compose.yml
-	docker-compose -f build/$*/docker-compose.yml build
+		$$(test -f docker-compose.env.yml && echo -f docker-compose.env.yml || echo "") \
+		$$(test -f docker-compose.$*.env.yml && echo -f docker-compose.$*.env.yml || echo "") \
+		config > $(build_dir)/docker-compose.yml
+	sed -i "s/image: woolgatherer/\0:$(build_tag)/g" $(build_dir)/docker-compose.yml
+	docker-compose -f $(build_dir)/docker-compose.yml build
 
-redeploy-%: shutdown-% build-%
-	docker-compose -p woolgatherer_$* -f build/$*/docker-compose.yml up -d
+redeploy-%: buildvars-% shutdown-% build-%
+	docker-compose -p $(project_name) -f $(build_dir)/docker-compose.yml up -d
 
-deploy-%:
-	docker-compose -p woolgatherer_$* -f build/$*/docker-compose.yml up -d
+deploy-%: buildvars-%
+	docker-compose -p $(project_name) -f $(build_dir)/docker-compose.yml up -d
 
-shutdown-%:
-	test -f build/$*/docker-compose.yml && \
-		docker-compose -p woolgatherer_$* -f build/$*/docker-compose.yml down --remove-orphans || true
+shutdown-%: buildvars-%
+	test -f $(build_dir)/docker-compose.yml && \
+		docker-compose -p $(project_name) -f $(build_dir)/docker-compose.yml down --remove-orphans || true
 
-shutdown-dev:
-	# make a specialized shutdown for dev which removes volumes
-	test -f build/dev/docker-compose.yml && \
-		docker-compose -p woolgatherer_dev -f build/dev/docker-compose.yml down -v --remove-orphans || true
-
-run-%-shell:
-	docker-compose -p woolgatherer_$* -f build/$*/docker-compose.yml run backend sh
+run-%-shell: buildvars-%
+	docker-compose -p $(project_name) -f $(build_dir)/docker-compose.yml run backend sh

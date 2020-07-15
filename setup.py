@@ -8,6 +8,8 @@ from setuptools import setup, find_packages
 
 
 EXTRAS_REQUIRE = {}
+EXTRAS_REQUIRE["dev"] = ["jedi", "mypy", "black", "pylint", "pyyaml", "pytest", "coverage", "requests"]
+EXTRAS_REQUIRE["build"] = ["docker-compose==1.24.1", "idna==2.7"]
 EXTRAS_REQUIRE["scipy"] = ["scipy==1.3.3"]
 EXTRAS_REQUIRE["sqlite"] = ["aiosqlite==0.10.0"]
 EXTRAS_REQUIRE["postgresql"] = ["asyncpg==0.20.0", "psycopg2==2.8.4"]

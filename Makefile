@@ -18,7 +18,7 @@ venv-dev: venv-base requirements-dev.txt
 	. venv/bin/activate; pip install -r requirements-dev.txt
 
 lint: venv-dev
-	. venv/bin/activate; mypy src; pylint -d W0511 src
+	. venv/bin/activate; black src; mypy src; pylint -d W0511 src
 
 test: venv-dev
 	. venv/bin/activate; coverage run -m pytest -v

@@ -253,7 +253,7 @@ async def get_dashboard(
     }
 
     return templates.TemplateResponse(
-        "index.html",
+        "dashboard/index.html",
         {
             "edits": edits,
             "request": request,

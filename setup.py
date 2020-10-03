@@ -18,6 +18,7 @@ EXTRAS_REQUIRE["dev"] = [
     "coverage",
     "requests",
 ]
+EXTRAS_REQUIRE["redis"] = ["aioredis==1.3.1"]
 EXTRAS_REQUIRE["build"] = ["docker-compose==1.24.1", "idna==2.7"]
 EXTRAS_REQUIRE["scipy"] = ["scipy==1.3.3"]
 EXTRAS_REQUIRE["sqlite"] = ["aiosqlite==0.10.0"]
@@ -81,6 +82,7 @@ setup(
     install_requires=[
         "nltk==3.4.5",
         "py-rouge==1.1",
+        "aiocache==0.11.1",
         "aiofiles==0.4.0",
         "aiohttp==3.6.2",
         "alembic==1.2.1",
@@ -91,7 +93,7 @@ setup(
         "fastapi==0.45.0",
         "regex==2020.1.8",
         "pydantic==1.1.1",
-        "uvicorn==0.9.0",
+        "uvicorn==0.10.0",
         "gunicorn==19.9.0",
         "databases==0.2.5",
         "sqlalchemy==1.3.10",

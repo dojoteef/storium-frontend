@@ -6,6 +6,8 @@ services:
       context: .
     depends_on:
       - db
+    environment:
+      - GW_CACHE_URL=redis://cache
     restart: unless-stopped
     image: woolgatherer
   tasks:
@@ -24,6 +26,14 @@ services:
     restart: unless-stopped
   queue:
     image: rabbitmq:3-alpine
+    restart: unless-stopped
+  cache:
+    image: redis:5-alpine
+    volumes:
+      - type: bind
+        source: ./redis.conf
+        target: /usr/local/etc/redis/redis.conf
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     restart: unless-stopped
 
 volumes:

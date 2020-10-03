@@ -3,6 +3,7 @@ SELECT
   s.story->>'game_pid' AS game_pid,
   sg.generated->>'description' AS generated_text,
   sg.finalized->>'description' AS user_text,
+  sg.uuid AS suggestion_id,
   fm.response AS comments,
   ff.response AS fluency,
   fl.response AS likeability,

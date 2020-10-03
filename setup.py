@@ -8,7 +8,16 @@ from setuptools import setup, find_packages
 
 
 EXTRAS_REQUIRE = {}
-EXTRAS_REQUIRE["dev"] = ["jedi", "mypy", "black", "pylint", "pyyaml", "pytest", "coverage", "requests"]
+EXTRAS_REQUIRE["dev"] = [
+    "jedi",
+    "mypy",
+    "black",
+    "pylint",
+    "pyyaml",
+    "pytest",
+    "coverage",
+    "requests",
+]
 EXTRAS_REQUIRE["build"] = ["docker-compose==1.24.1", "idna==2.7"]
 EXTRAS_REQUIRE["scipy"] = ["scipy==1.3.3"]
 EXTRAS_REQUIRE["sqlite"] = ["aiosqlite==0.10.0"]
@@ -89,6 +98,10 @@ setup(
         "sqlalchemy-utils==0.34.2",
         "async-generator==1.10;python_version<'3.7'",
         "async-exit-stack==1.0.1;python_version<'3.7'",
+        # we don't explicitly use vine, but packages like celery do and they do
+        # not correctly pin the version which causes issues with the latest
+        # release of vine; make sure to use a compatible version
+        "vine==1.3.0",
     ],
     extras_require=EXTRAS_REQUIRE,
 )

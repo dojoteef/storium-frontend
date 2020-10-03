@@ -1,6 +1,1 @@
 version: '3.3'
-
-services:
-  backend:
-    ports:
-      - 8080:8000

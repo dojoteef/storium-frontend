@@ -1,0 +1,44 @@
+<nav class="navbar navbar-expand-sm navbar-light fixed-top flex-sm-row">
+  <a class="navbar-brand mr-0 storium-icon" href="#"></a>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  {% set frontend_base_url="" %}
+  {% set dashboard_base_url="" %}
+
+  {% if page == "frontend" %}
+    {% set dashboard_base_url="/dashboard" %}
+  {% endif %}
+  {% if page == "dashboard" %}
+    {% set frontend_base_url="/" %}
+  {% endif %}
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link text-secondary" href="{{frontend_base_url}}#about">About</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-secondary" href="{{frontend_base_url}}#paper">Paper</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-secondary" href="{{frontend_base_url}}#contact">Contact</a>
+      </li>
+      <li class="nav-item dropdown">
+        <div class="btn-group">
+          <a class="nav-link text-secondary" href="{{dashboard_base_url}}#">Leaderboard</a>
+          <a class="nav-link dropdown-toggle dropdown-toggle-split text-secondary" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="sr-only">Leaderboard Dropdown</span>
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item text-secondary" href="{{dashboard_base_url}}#ratings">Ratings</a>
+            <a class="dropdown-item text-secondary" href="{{dashboard_base_url}}#correlations">Correlations</a>
+            <a class="dropdown-item text-secondary" href="{{dashboard_base_url}}#histograms">Histograms</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item text-secondary" href="{{dashboard_base_url}}#edits">User Edits</a>
+          </div>
+        </div>
+      </li>
+  </div>
+</nav>

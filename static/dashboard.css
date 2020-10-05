@@ -1,29 +1,166 @@
 body {
   font-size: .875rem;
+  padding-top: 4.5rem;
 }
 
 /*
  * Content
  */
 
-[role="main"] {
-  padding-top: 133px; /* Space for fixed navbar */
+.texttt {
+  font-family: courier;
 }
 
-@media (min-width: 768px) {
-  [role="main"] {
-    padding-top: 48px; /* Space for fixed navbar */
-  }
+.paper-title {
+  font-family: Helvetica Light, sans-serif;
+  font-weight: 300;
+}
+
+.storium-icon {
+  width: 44px;
+  height: 44px;
+  background-size: 44px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url("/static/storium-icon.svg");
+}
+
+.storium-logo {
+  width: 216px;
+  height: 70.4px;
+  background-size: 216px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url("/static/storium.svg");
+}
+
+.umass-ngram-logo {
+  width: 161.6px;
+  height: 70.4px;
+  background-size: 161.6px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url("/static/umass_ngram.svg");
+}
+
+.citation {
+  display: block;
+  padding: 9.5px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.42857143;
+  word-break: break-all;
+  word-wrap: break-word;
+  color: #333;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+section:target::before {
+  margin-top: -60px;
+  padding-top: 60px;
+  content: "";
+  display:block;
+  pointer-events: none;
+}
+
+mark {
+  margin: 0 -0.2em;
+  padding: 0.1em 0.4em;
+  border-radius: 0.8em 0.3em;
+  background: transparent;
+  background-image: linear-gradient(
+    to right,
+    rgba(255, 250, 153, 0.1),
+    rgba(255, 250, 153, 0.7) 4%,
+    rgba(255, 250, 153, 0.3)
+  );
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+mark.yellow {
+  background-image: linear-gradient(
+    to right,
+    rgba(255, 250, 153, 0.1),
+    rgba(255, 250, 153, 0.7) 4%,
+    rgba(255, 250, 153, 0.3)
+  );
+}
+
+mark.green {
+  background-image: linear-gradient(
+    to right,
+    rgba(153, 255, 153, 0.3),
+    rgba(153, 255, 153, 1) 4%,
+    rgba(153, 255, 153, 0.7)
+  );
+}
+
+mark.red {
+  background-image: linear-gradient(
+    to right,
+    rgba(255, 153, 153, 0.3),
+    rgba(255, 153, 153, 1) 4%,
+    rgba(255, 153, 153, 0.7)
+  );
+}
+
+/*
+ * Storium
+ */
+
+.character {
+  color: rgb(255, 255, 255);
+  border-top: solid 2px rgb(128, 128, 128);
+  border-bottom: solid 2px rgb(128, 128, 128);
+  background-color: rgb(197, 197, 197);
+}
+
+.challenge {
+  color: rgb(255, 255, 255);
+  border-top: solid 2px rgb(128, 64, 64);
+  border-bottom: solid 2px rgb(128, 64, 64);
+  background-color: rgb(197, 145, 145);
+}
+
+.strength {
+  color: rgb(255, 255, 255);
+  border-top: solid 2px rgb(128, 64, 128);
+  border-bottom: solid 2px rgb(128, 64, 128);
+  background-color: rgb(197, 145, 197);
+}
+
+.scene-entry {
+  color: rgb(255, 255, 255);
+  border-top: solid 2px rgb(128, 128, 64);
+  border-bottom: solid 2px rgb(128, 128, 64);
+  background-color: rgb(197, 197, 145);
+}
+
+.scene-intro {
+  color: rgb(255, 255, 255);
+  border-top: solid 2px rgb(64, 64, 128);
+  border-bottom: solid 2px rgb(64, 64, 128);
+  background-color: rgb(145, 145, 197);
 }
 
 /*
  * Navbar
  */
 
+.navbar {
+  background-color: #f2f2f2;
+  box-shadow: 0px 2px 2px 1px rgba(0, 0, 0, 0.15);
+}
+
+.nav-link {
+  font-size: 1.2em;
+  font-weight: 500;
+}
+
 .navbar-brand {
   padding-top: .75rem;
   padding-bottom: .75rem;
-  font-size: 1rem;
-  background-color: rgba(0, 0, 0, .25);
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
 }

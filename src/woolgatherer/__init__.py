@@ -22,7 +22,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from woolgatherer.db.session import open_connection_pool, close_connection_pool
 from woolgatherer.errors import InvalidOperationError, InsufficientCapacityError
 from woolgatherer.metrics import initialize_metrics
-from woolgatherer.routers import dashboard, stories, suggestions
+from woolgatherer.routers import dashboard, frontend, stories, suggestions
 from woolgatherer.utils.auth import Requires, TokenAuthBackend
 from woolgatherer.utils.settings import Settings
 
@@ -39,6 +39,7 @@ app.add_middleware(
     trusted_hosts=os.environ.get("FORWARDED_ALLOW_IPS", "127.0.0.1"),
 )
 
+app.include_router(frontend.router, prefix="", tags=["frontend"])
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(
     stories.router,

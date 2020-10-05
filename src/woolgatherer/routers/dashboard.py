@@ -1,5 +1,5 @@
 """
-This router handles the stories endpoints.
+This router handles the dashboard endpoints.
 """
 import io
 import os

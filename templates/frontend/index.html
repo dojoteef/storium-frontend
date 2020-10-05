@@ -1,0 +1,130 @@
+{% set page = "frontend" %}
+
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='/dashboard.css') }}">
+    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <title>Storium Evaluation Platform</title>
+  </head>
+  <body>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+    {% include "navbar.html" %}
+
+    <main role="main" class="container" style="max-width: 1024px;">
+      <section id="intro">
+        <h1 class="text-center paper-title">Story Generation and Evaluation</h1>
+        <div class="container">
+          <div class="d-flex flex-wrap justify-content-center">
+            <a class="navbar-brand m-3 storium-logo" href="https://storium.com"></a>
+            <a class="navbar-brand m-3 umass-ngram-logo" href="https://cs.umass.edu/~miyyer"></a>
+          </div>
+          <div class="d-flex flex-wrap justify-content-center">
+            <div class="btn btn-group">
+              <a class="btn btn-lg btn-info" href="https://arxiv.org/abs/tbd" role="button" title="Paper">Paper</a>
+              <a class="btn btn-lg btn-info" href="https://drive.google.com/open?id=tbd" role="button" title="Dataset">Dataset</a>
+              <button type="button" class="btn btn-lg btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Code
+              </button>
+              <div class="dropdown-menu">
+                <a class="dropdown-item" href="https://github.com/dojoteef/storium">Model</a>
+                <a class="dropdown-item" href="https://github.com/dojoteef/storium-backend">Backend</a>
+                <a class="dropdown-item" href="https://github.com/dojoteef/storium-frontend">Frontend</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="about">
+        <h3>About</h3>
+        <p>
+          Systems for story generation are asked to produce plausible and
+          enjoyable stories given an input context. This task is underspecified,
+          as a vast number of diverse stories can originate from a single input.
+          The large output space makes it difficult to build and evaluate story
+          generation models, as (1) existing datasets lack rich enough contexts
+          to meaningfully guide models, and (2) existing evaluations (both
+          crowdsourced and automatic) are unreliable for assessing long-form
+          creative text. To address these issues, we introduce a dataset and
+          evaluation platform built with
+          <a href="https://storium.com" class="text-info initialism">STORIUM</a>,
+          an online collaborative storytelling community. Our author-generated
+          dataset contains 6K lengthy stories (125M tokens) with fine-grained
+          natural language annotations, in the form of cards, interspersed
+          throughout each narrative, forming a robust source for guiding
+          models. Our evaluation platform is integrated directly with
+          <a href="https://storium.com" class="text-info initialism">STORIUM</a>,
+          where <i>real</i> authors can query a model for suggested story
+          continuations and then edit them. We provide a leaderboard with
+          automatic metrics computed over these edits, which correlate well
+          with both user ratings of generated stories and qualitative feedback
+          from semi-structured user interviews. We release both the dataset and
+          evaluation platform to spur more principled research into story
+          generation.
+        </p>
+        <div class="img-wrapper text-center">
+          <img src="static/overview.svg" style="height: auto; width: 100%;">
+        </div>
+        <p style="line-height: 1.6rem;">
+          A high-level outline of our dataset and platform. In this example
+          from a real 
+          <a href="https://storium.com/game/night-witches--2/act-1/scene-2" class="text-info initialism">STORIUM</a>
+          game, the <span class="character">character</span>
+          <span class="character">ADIRA MAKAROVA</span> uses the
+          <span class="strength">strength card</span>
+          <span class="strength">DEADLY AIM</span> to
+          <span class="challenge">DISRUPT THE GERMANS</span>, a
+          <span class="challenge">challenge card</span>. Our model
+          conditions on the natural language annotations in the
+          <span class="scene-intro">scene intro</span>,
+          <span class="challenge">challenge</span> card,
+          <span class="strength">strength card</span>, and
+          <span class="character">character</span>,
+          along with the text of the
+          <span class="scene-entry">previous scene entry</span> (not shown)
+          to generate a suggested story continuation. Players may then edit the
+          model output, by <mark class="green">adding</mark> or <mark class="red">deleting</mark> text,
+          before publishing the entry. We collect these edits, using the
+          <mark>matched</mark> text as the basis of our USER metric. New models
+          can be added to the platform by simply implementing four methods:
+          <span class="texttt">startup</span>,
+          <span class="texttt">shutdown</span>,
+          <span class="texttt">preprocess</span>, and
+          <span class="texttt">generate</span>.
+        </p>
+      </section>
+
+      <section id="paper">
+        <h3>Paper</h3>
+        If you use our dataset or evaluation platform, please cite:
+        <pre class="citation">
+@inproceedings{storium2020,
+  Author = {Nader Akoury, Shufan Wang, Josh Whiting, Stephen Hood, Nanyun Peng and Mohit Iyyer},
+  Booktitle = {Empirical Methods for Natural Language Processing,
+  Year = "2020",
+  Title = {{ '{{STORIUM}: {A} {D}ataset and {E}valuation {P}latform for {S}tory {G}eneration}' }}
+}</pre>
+        <div>
+          <a class="btn btn-info" href="https://arxiv.org/abs/tbd" role="button" title="Paper">Read the paper</a>
+        </div>
+      </section>
+
+      <section id="contact">
+        <h3>Contact</h3>
+        <p>
+          If you have any questions or comments about this work, please visit
+          my <a href="https://cs.umass.edu/~nsa" class="text-info">website</a>
+          which has my contact information, CV, and an up-to-date listing of my
+          publications.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

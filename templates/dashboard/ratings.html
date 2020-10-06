@@ -1,0 +1,42 @@
+<div class="d-flex flex-wrap justify-content-start">
+  <h2 class="mr-5">Average Ratings</h2>
+  <ul class="nav nav-tabs">
+    <li class="nav-item dropdown">
+      <button class="dropdown-toggle btn btn-lg btn-outline-dark text-capitalize" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Choose Rating
+      </button>
+      <div class="dropdown-menu" role="tablist">
+        {% for type in ratings_by_type.keys() %}
+        <a class="dropdown-item text-capitalize" data-toggle="tab" href="#avg-{{type}}-rating">{{type}}</a>
+        {% endfor %}
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="tab-content">
+  {% for type, ratings in ratings_by_type.items() %}
+  <div id="avg-{{type}}-rating" class="tab-pane">
+    <table id="avg-{{type}}-table" name="avg-rating-table" class="table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Model Name</th>
+          <th scope="col">Average Rating</th>
+          <th scope="col">Standard Deviation</th>
+          <th scope="col">Feedback Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rating in ratings %}
+        <tr>
+          <td>{{rating.model_name}}</td>
+          <td>{{rating.avg_rating}}</td>
+          <td>{{rating.rating_stddev}}</td>
+          <td>{{rating.feedback_count}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+</div>

@@ -24,249 +24,145 @@
 
     {% include "navbar.html" %}
 
-    <div class="container-fluid">
-      <main role="main" class="col ml-sm-auto px-4">
-        <section id="ratings">
-        <h2>Average Ratings</h2>
-        <div class="container-fluid">
-        {% for type, ratings in ratings_by_type.items() %}
-        <h3 id="avg-{{type}}-rating" class="text-capitalize">{{type}}</h3>
-        <table id="avg-{{type}}-table" name="avg-rating-table" class="table table-striped">
-          <thead class="thead-dark">
-            <tr>
-              <th scope="col">Model Name</th>
-              <th scope="col">Average Rating</th>
-              <th scope="col">Standard Deviation</th>
-              <th scope="col">Feedback Count</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for rating in ratings %}
-            <tr>
-              <td>{{rating.model_name}}</td>
-              <td>{{rating.avg_rating}}</td>
-              <td>{{rating.rating_stddev}}</td>
-              <td>{{rating.feedback_count}}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% endfor %}
-        </div>
-        </section>
+    <main role="main" class="col ml-sm-auto px-4 container-fluid">
+      <section id="ratings" class="mb-2">
+        {% include "dashboard/ratings.html" %}
+      </section>
 
-        <section id="correlations">
-        <h2>Rouge and Rating Correlations</h2>
-        <div class="container-fluid">
-        <table id="correlations-table" name="correlations-table" class="table table-striped">
-          <thead class="thead-dark">
-            <tr>
-              <th scope="col"></th>
-              {% for x, row in correlations.items() %}
-              <th scope="col" class="text-capitalize">{{x}}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for x, row in correlations.items() %}
-            <tr>
-              <td class="bg-dark font-weight-bold text-white text-capitalize">{{x}}</td>
-              {% for _ in range(loop.index) %}
-              <td>&mdash;</td>
-              {% endfor %}
-              {% for y, correlation in row.items() %}
-              <td>{{correlation}}</td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        * p &lt; 0.05, ** p &lt; 0.01
-        </div>
+      <section id="correlations" class="mb-2">
+        {% include "dashboard/correlations.html" %}
+      </section>
 
-        {% for model_name, model_correlations in correlations_by_model.items() %}
-        <h2 id="correlations-{{model_name}}">Rouge and Rating Correlations ({{model_name}})</h2>
-        <div class="container-fluid">
-        <table id="correlations-{{model_name}}-table" name="correlations-{{model_name}}-table" class="table table-striped">
-          <thead class="thead-dark">
-            <tr>
-              <th scope="col"></th>
-              {% for x, row in model_correlations.items() %}
-              <th scope="col" class="text-capitalize">{{x}}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for x, row in model_correlations.items() %}
-            <tr>
-              <td class="bg-dark font-weight-bold text-white text-capitalize">{{x}}</td>
-              {% for _ in range(loop.index) %}
-              <td>&mdash;</td>
-              {% endfor %}
-              {% for y, correlation in row.items() %}
-              <td>{{correlation}}</td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        * p &lt; 0.05, ** p &lt; 0.01
-        </div>
-        {% endfor %}
-        </section>
-
-        <section id="unique-users">
-        <h2>Unique Users</h2>
-        <caption>Number of users with fewer than <i>n</i> suggestions</caption>
-        <table class="table table-striped">
-          <thead class="thead-dark">
-            <tr>
-              <th scope="col">Num Users</th>
-              <th scope="col">Suggestion Count</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for count, num_users in suggestion_counts.items() %}
-            <tr>
-              <td>{{num_users}}</td>
-              <td>&le; {{count}}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        </section>
-
-        <section id="histograms">
-        <h2>Histogram of Sentence Overlaps</h2>
-        <div class="container px-sm-3 px-md-4 px-lg-5">
-          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 mx-sm-n3 mx-md-n4 mx-lg-n5 align-items-end">
-            {% for model in models %}
-            <div class="col py-3 px-sm-3 px-md-4 px-lg-5 sentence-histogram" name="{{model}}">
-              <div class="row justify-content-center" style="text-align: center;">
-                <b>{{model}}</b>
-              </div>
-              <div class="row justify-content-center">
-                <span class="alert alert-dark histogram-count" disabled>Total Overlaps:</span>
-              </div>
-              <div class="row justify-content-center">
-                <canvas class="histogram-canvas" width="400" height="400"></canvas>
-              </div>
-              <div class="row justify-content-center">
-                <div class="button-group">
-                  <button type="button" class="btn btn-secondary histogram-export" title="Export chart to SVG">Export</button>
-                </div>
-              </div>
+      <section id="histograms">
+      <h2>Histogram of Sentence Overlaps</h2>
+      <div class="container px-sm-3 px-md-4 px-lg-5">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 mx-sm-n3 mx-md-n4 mx-lg-n5 align-items-end">
+          {% for model in models %}
+          <div class="col py-3 px-sm-3 px-md-4 px-lg-5 sentence-histogram" name="{{model}}">
+            <div class="row justify-content-center" style="text-align: center;">
+              <b>{{model}}</b>
             </div>
-            {% endfor %}
-          </div>
-        </div>
-        </section>
-
-        <h2>Export Judgement Contexts</h2>
-        <div class="d-flex flex-row justify-content-center">
-          <div class="input-group">
-            <div class="input-group-prepend">
-              <span class="input-group-text" id="inputGroup-sizing-default">Limit per Model</span>
+            <div class="row justify-content-center">
+              <span class="alert alert-dark histogram-count" disabled>Total Overlaps:</span>
             </div>
-            <input id="judgementCount" type="number" value="0" style="text-align:right; width:6em">
-            <div class="input-group-append">
-              <button id="judgementCSV" type="button" class="judgements btn btn-secondary" title="Generate judgement csv file">
-                <span>CSV</span>
-              </button>
-              <button id="judgementJSON" type="button" class="judgements btn btn-secondary" title="Generate judgement json file">
-                <span>JSON</span>
-              </button>
+            <div class="row justify-content-center">
+              <canvas class="histogram-canvas" width="400" height="400"></canvas>
+            </div>
+            <div class="row justify-content-center">
+              <div class="button-group">
+                <button type="button" class="btn btn-secondary histogram-export" title="Export chart to SVG">Export</button>
+              </div>
             </div>
           </div>
+          {% endfor %}
         </div>
+      </div>
+      </section>
 
-        <section id="edits">
-        {% set rouge_types = ('rouge-4', 'rouge-l', 'rouge-w', 'user') %}
-        <h2>Edited Suggestions</h2>
-        <table id="suggestions-table" class="table table-striped text-center invisible" style="width:100%">
-          <thead class="thead-dark">
-            <tr>
-              <th rowspan="2" class="align-middle" scope="col">#</th>
-              <th rowspan="2" class="align-middle" scope="col">PID</th>
-              <th rowspan="2" class="align-top" scope="col">Model</th>
-              <th colspan="3" class="align-top" scope="col">#Sentences</th>
-              <th colspan="12" class="align-top" scope="col" id="rouge">Rouge/User</th>
-            </tr>
-            <tr>
-              <th class="align-top" scope="col">User</th>
-              <th class="align-top" scope="col">Model</th>
-              <th class="align-top" scope="col">Overlap</th>
-              {% for metric in ('precision', 'recall', 'f1') %}
-              <th class="align-top rouge {{metric}}" scope="col">4</th>
-              <th class="align-top rouge {{metric}}" scope="col">L</th>
-              <th class="align-top rouge {{metric}}" scope="col">W</th>
-              <th class="align-top rouge {{metric}}" scope="col">U</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for edit in edits %}
-            <tr>
-              <th scope="row">{{loop.index}}</span></th>
-              <td scope="row">{{edit.game_pid}}</td>
-              <td scope="row">{{edit.model_name}}</td>
-              <td scope="row">{{edit.finalized_sentences}}</td>
-              <td scope="row">{{edit.generated_sentences}}</td>
-              <td scope="row">{{edit.overlaps}}</td>
-              {% for metric in ('p', 'r', 'f') %}
-              {% for rouge_type in rouge_types %}
-              <td scope="row">
-                  {{"{:.2f}".format(edit[rouge_type][metric])}}
-              </td>
-              {% endfor %}
-              {% endfor %}
-            </tr>
-            <div id="accordion{{loop.index}}" style="display: none">
-              <div class="card">
-                <div class="card-header">
-                  <div class="btn-toolbar" role="toolbar">
-                    <div class="btn-group btn-group-toggle mr-2" data-toggle="buttons">
-                      <label class="btn btn-secondary active">
-                        <input type="radio" name="options" id="showDiff" autocomplete="off" data-toggle="collapse" data-target="#diff{{loop.index}}" checked>
-                        Diff
-                      </label>
-                      {% if edit.comments is not none %}
-                      <label class="btn btn-secondary">
-                        <input type="radio" name="options" id="showComments" autocomplete="off" data-toggle="collapse" data-target="#comments{{loop.index}}">
-                        Comments
-                      </label>
-                      {% endif %}
-                    </div>
-                    <ul class="list-group list-group-horizontal align-middle">
-                      <button class="list-group-item btn-sm py-0 px-2" disabled>Fluency: {{edit.fluency}}</button>
-                      <button class="list-group-item btn-sm py-0 px-2" disabled>Relevance: {{edit.relevance}}</button>
-                      <button class="list-group-item btn-sm py-0 px-2" disabled>Coherence: {{edit.coherence}}</button>
-                      <button class="list-group-item btn-sm py-0 px-2" disabled>Likeability: {{edit.likeability}}</button>
-                    </ul>
-                  </div>
-                </div>
-                <div id="diff{{loop.index}}" class="collapse show" data-parent="#accordion{{loop.index}}">
-                  <div class="card-body">
-                    <div style="max-height: 17.5em; overflow: scroll">
-                    {% for type, word in edit.diff %}<span class="{{type}}">{{word}}</span>{% endfor %}
-                    </div>
-                  </div>
-                </div>
-                {% if edit.comments is not none %}
-                <div id="comments{{loop.index}}" class="collapse" data-parent="#accordion{{loop.index}}">
-                  <div class="card-body border-top">
-                    {{edit.comments}}
-                  </div>
-                </div>
-                {% endif %}
-              </div>
-            </div>
+      <h2>Export Judgement Contexts</h2>
+      <div class="d-flex flex-row justify-content-center">
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-default">Limit per Model</span>
+          </div>
+          <input id="judgementCount" type="number" value="0" style="text-align:right; width:6em">
+          <div class="input-group-append">
+            <button id="judgementCSV" type="button" class="judgements btn btn-secondary" title="Generate judgement csv file">
+              <span>CSV</span>
+            </button>
+            <button id="judgementJSON" type="button" class="judgements btn btn-secondary" title="Generate judgement json file">
+              <span>JSON</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section id="edits">
+      {% set rouge_types = ('rouge-4', 'rouge-l', 'rouge-w', 'user') %}
+      <h2>Edited Suggestions</h2>
+      <table id="suggestions-table" class="table table-striped text-center invisible" style="width:100%">
+        <thead class="thead-dark">
+          <tr>
+            <th rowspan="2" class="align-middle" scope="col">#</th>
+            <th rowspan="2" class="align-middle" scope="col">PID</th>
+            <th rowspan="2" class="align-top" scope="col">Model</th>
+            <th colspan="3" class="align-top" scope="col">#Sentences</th>
+            <th colspan="12" class="align-top" scope="col" id="rouge">Rouge/User</th>
+          </tr>
+          <tr>
+            <th class="align-top" scope="col">User</th>
+            <th class="align-top" scope="col">Model</th>
+            <th class="align-top" scope="col">Overlap</th>
+            {% for metric in ('precision', 'recall', 'f1') %}
+            <th class="align-top rouge {{metric}}" scope="col">4</th>
+            <th class="align-top rouge {{metric}}" scope="col">L</th>
+            <th class="align-top rouge {{metric}}" scope="col">W</th>
+            <th class="align-top rouge {{metric}}" scope="col">U</th>
             {% endfor %}
-          </tbody>
-        </table>
-        </section>
-      </main>
-    </div>
+          </tr>
+        </thead>
+        <tbody>
+          {% for edit in edits %}
+          <tr>
+            <th scope="row">{{loop.index}}</span></th>
+            <td scope="row">{{edit.game_pid}}</td>
+            <td scope="row">{{edit.model_name}}</td>
+            <td scope="row">{{edit.finalized_sentences}}</td>
+            <td scope="row">{{edit.generated_sentences}}</td>
+            <td scope="row">{{edit.overlaps}}</td>
+            {% for metric in ('p', 'r', 'f') %}
+            {% for rouge_type in rouge_types %}
+            <td scope="row">
+                {{"{:.2f}".format(edit[rouge_type][metric])}}
+            </td>
+            {% endfor %}
+            {% endfor %}
+          </tr>
+          <div id="accordion{{loop.index}}" style="display: none">
+            <div class="card">
+              <div class="card-header">
+                <div class="btn-toolbar" role="toolbar">
+                  <div class="btn-group btn-group-toggle mr-2" data-toggle="buttons">
+                    <label class="btn btn-secondary active">
+                      <input type="radio" name="options" id="showDiff" autocomplete="off" data-toggle="collapse" data-target="#diff{{loop.index}}" checked>
+                      Diff
+                    </label>
+                    {% if edit.comments is not none %}
+                    <label class="btn btn-secondary">
+                      <input type="radio" name="options" id="showComments" autocomplete="off" data-toggle="collapse" data-target="#comments{{loop.index}}">
+                      Comments
+                    </label>
+                    {% endif %}
+                  </div>
+                  <ul class="list-group list-group-horizontal align-middle">
+                    <button class="list-group-item btn-sm py-0 px-2" disabled>Fluency: {{edit.fluency}}</button>
+                    <button class="list-group-item btn-sm py-0 px-2" disabled>Relevance: {{edit.relevance}}</button>
+                    <button class="list-group-item btn-sm py-0 px-2" disabled>Coherence: {{edit.coherence}}</button>
+                    <button class="list-group-item btn-sm py-0 px-2" disabled>Likeability: {{edit.likeability}}</button>
+                  </ul>
+                </div>
+              </div>
+              <div id="diff{{loop.index}}" class="collapse show" data-parent="#accordion{{loop.index}}">
+                <div class="card-body">
+                  <div style="max-height: 17.5em; overflow: scroll">
+                  {% for type, word in edit.diff %}<span class="{{type}}">{{word}}</span>{% endfor %}
+                  </div>
+                </div>
+              </div>
+              {% if edit.comments is not none %}
+              <div id="comments{{loop.index}}" class="collapse" data-parent="#accordion{{loop.index}}">
+                <div class="card-body border-top">
+                  {{edit.comments}}
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </tbody>
+      </table>
+      </section>
+    </main>
 
   </body>
 </html>

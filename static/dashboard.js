@@ -247,4 +247,11 @@ $(document).ready(function () {
   setupSuggestionsTable();
   setupSentenceHistogram();
   setupJudgmentsButton();
+
+  $('.dropdown-item').on('click',  function(){
+    var btnObj = $(this).parent().siblings('button');
+    console.log("changing " + $(btnObj).text() + " to " + $(this).text());
+    $(btnObj).text($(this).text());
+    $(btnObj).val($(this).text());
+  });
 });

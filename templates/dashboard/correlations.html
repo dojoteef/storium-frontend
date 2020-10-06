@@ -1,0 +1,95 @@
+<div class="d-flex flex-wrap justify-content-start">
+  <h2 class="mr-5">Correlations</h2>
+  <ul class="nav nav-tabs">
+    <li class="nav-item dropdown">
+      <button class="dropdown-toggle btn btn-lg btn-outline-dark mb-2 text-capitalize" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Choose Model
+      </button>
+      <div class="dropdown-menu" role="tablist">
+        <a class="dropdown-item" data-toggle="tab" href="#correlations-table">All</a>
+        {% for model_name, model_correlations in correlations_by_model.items() %}
+        <a class="dropdown-item" data-toggle="tab" href="#correlations-{{model_name}}-table">{{model_name}}</a>
+        {% endfor %}
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="tab-content">
+  <div id="correlations-table" class="tab-pane">
+    <table class="table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col"></th>
+          {% for x, row in correlations.items() %}
+          <th scope="col" class="text-capitalize">{{x}}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for x, row in correlations.items() %}
+        <tr>
+          <td class="bg-dark font-weight-bold text-white text-capitalize">{{x}}</td>
+          {% for _ in range(loop.index) %}
+          <td>&mdash;</td>
+          {% endfor %}
+          {% for y, correlation in row.items() %}
+          <td>{{correlation}}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    * p &lt; 0.05, ** p &lt; 0.01
+  </div>
+
+  {% for model_name, model_correlations in correlations_by_model.items() %}
+  <div id="correlations-{{model_name}}-table" class="tab-pane">
+    <table name="correlations-{{model_name}}-table" class="table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col"></th>
+          {% for x, row in model_correlations.items() %}
+          <th scope="col" class="text-capitalize">{{x}}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for x, row in model_correlations.items() %}
+        <tr>
+          <td class="bg-dark font-weight-bold text-white text-capitalize">{{x}}</td>
+          {% for _ in range(loop.index) %}
+          <td>&mdash;</td>
+          {% endfor %}
+          {% for y, correlation in row.items() %}
+          <td>{{correlation}}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    * p &lt; 0.05, ** p &lt; 0.01
+  </div>
+  {% endfor %}
+</div>
+</section>
+
+<section id="unique-users">
+<h2>Unique Users</h2>
+<caption>Number of users with fewer than <i>n</i> suggestions</caption>
+<table class="table table-striped">
+<thead class="thead-dark">
+  <tr>
+    <th scope="col">Num Users</th>
+    <th scope="col">Suggestion Count</th>
+  </tr>
+</thead>
+<tbody>
+  {% for count, num_users in suggestion_counts.items() %}
+  <tr>
+    <td>{{num_users}}</td>
+    <td>&le; {{count}}</td>
+  </tr>
+  {% endfor %}
+</tbody>
+</table>

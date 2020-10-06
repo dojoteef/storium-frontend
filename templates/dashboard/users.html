@@ -1,0 +1,18 @@
+<h2>Unique Users</h2>
+<caption>Number of users with fewer than <i>n</i> suggestions</caption>
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Num Users</th>
+      <th scope="col">Suggestion Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for count, num_users in suggestion_counts.items() %}
+    <tr>
+      <td>{{num_users}}</td>
+      <td>&le; {{count}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

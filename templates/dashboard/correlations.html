@@ -1,28 +1,65 @@
-<div class="d-flex flex-wrap justify-content-start">
-  <h2 class="mr-5">Correlations</h2>
-  <ul class="nav nav-tabs">
-    <li class="nav-item dropdown">
-      <button class="dropdown-toggle btn btn-lg btn-outline-dark mb-2 text-capitalize" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Choose Model
-      </button>
-      <div class="dropdown-menu" role="tablist">
-        <a class="dropdown-item" data-toggle="tab" href="#correlations-table">All</a>
-        {% for model_name, model_correlations in correlations_by_model.items() %}
-        <a class="dropdown-item" data-toggle="tab" href="#correlations-{{model_name}}-table">{{model_name}}</a>
-        {% endfor %}
-      </div>
-    </li>
-  </ul>
-</div>
+{% macro abbreviate(name) -%}
+  {% set parts=name.partition('-') %}
+  {% if parts[1] %}
+    {{ [parts[0][:1], parts[2]] | join }}
+  {% else %}
+    {{ parts[0][:1] }}
+  {% endif %}
+{%- endmacro %}
 
-<div class="tab-content">
-  <div id="correlations-table" class="tab-pane">
-    <table class="table table-striped">
+{% macro correlation_font(p) -%}
+  {% set classes=[] %}
+  {% if p < 0.01 %}
+    {% do classes.append(" font-italic") %}
+  {% endif %}
+
+  {% if p < 0.05 %}
+    {% do classes.append(" font-weight-bold") %}
+  {% endif %}
+  {{classes | join(" ")}}
+{%- endmacro %}
+
+{% macro format_correlation(correlation) -%}
+  <p class="{{correlation_font(correlation.p)}}">{{"{:.2f}".format(correlation.r).lstrip("0")}}</p>
+{%- endmacro %}
+
+{% macro make_correlations_table(model_name, correlations) -%}
+<div class="d-flex tab-content">
+  <div class="tab-pane correlations-{{model_name}}">
+    <table class="d-lg-none table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col"></th>
+          {%set ns=namespace(first=true) %}
+          {% for x, row in correlations.items() %}
+            {% if not ns.first %}
+            <th scope="col" class="text-capitalize text-center"><abbr title={{x}} data-toggle="tooltip" data-placement="top">{{abbreviate(x)}}</abbr></th>
+            {% endif %}
+            {% set ns.first=false %}
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for x, row in correlations.items() %}
+          <tr>
+            <td class="bg-dark font-weight-bold text-white text-capitalize"><abbr title={{x}} data-toggle="tooltip" data-placement="right">{{abbreviate(x)}}</abbr></td>
+            {% for _ in range(loop.index - 1) %}
+            <td class="text-center">&mdash;</td>
+            {% endfor %}
+            {% for y, correlation in row.items() %}
+              <td class="text-center">{{format_correlation(correlation)}}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="d-none d-lg-table table table-striped">
       <thead class="thead-dark">
         <tr>
           <th scope="col"></th>
           {% for x, row in correlations.items() %}
-          <th scope="col" class="text-capitalize">{{x}}</th>
+          <th scope="col" class="text-capitalize text-center">{{x}}</th>
           {% endfor %}
         </tr>
       </thead>
@@ -31,65 +68,45 @@
         <tr>
           <td class="bg-dark font-weight-bold text-white text-capitalize">{{x}}</td>
           {% for _ in range(loop.index) %}
-          <td>&mdash;</td>
+          <td class="text-center">&mdash;</td>
           {% endfor %}
           {% for y, correlation in row.items() %}
-          <td>{{correlation}}</td>
+          <td class="text-center">{{format_correlation(correlation)}}</td>
           {% endfor %}
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    * p &lt; 0.05, ** p &lt; 0.01
   </div>
+{%- endmacro %}
 
-  {% for model_name, model_correlations in correlations_by_model.items() %}
-  <div id="correlations-{{model_name}}-table" class="tab-pane">
-    <table name="correlations-{{model_name}}-table" class="table table-striped">
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col"></th>
-          {% for x, row in model_correlations.items() %}
-          <th scope="col" class="text-capitalize">{{x}}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for x, row in model_correlations.items() %}
-        <tr>
-          <td class="bg-dark font-weight-bold text-white text-capitalize">{{x}}</td>
-          {% for _ in range(loop.index) %}
-          <td>&mdash;</td>
-          {% endfor %}
-          {% for y, correlation in row.items() %}
-          <td>{{correlation}}</td>
-          {% endfor %}
-        </tr>
+
+<div class="d-flex flex-wrap justify-content-start">
+  <h2 class="my-1 mr-3">Correlations</h2>
+  <ul class="nav nav-tabs">
+    <li class="nav-item dropdown">
+      <button class="dropdown-toggle btn btn-lg btn-outline-dark mb-0" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Choose Model
+      </button>
+      <div class="dropdown-menu" role="tablist">
+        <button class="dropdown-item" data-toggle="tab" data-target=".correlations-all">All</button>
+        {% for model_name, model_correlations in correlations_by_model.items() %}
+        <button class="dropdown-item" data-toggle="tab" data-target=".correlations-{{model_name}}">{{model_name}}</button>
         {% endfor %}
-      </tbody>
-    </table>
-    * p &lt; 0.05, ** p &lt; 0.01
-  </div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <p class="ml-2 my-0 {{correlation_font(0.049)}}">p &lt; 0.05</p>
+        <p class="ml-2 my-0 {{correlation_font(0.009)}}">p &lt; 0.01</p>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<div class="d-flex flex-wrap justify-content-start">
+  {{make_correlations_table("all", all_correlations)}}
+  {% for model_name, model_correlations in correlations_by_model.items() %}
+  {{make_correlations_table(model_name, model_correlations)}}
   {% endfor %}
 </div>
-</section>
-
-<section id="unique-users">
-<h2>Unique Users</h2>
-<caption>Number of users with fewer than <i>n</i> suggestions</caption>
-<table class="table table-striped">
-<thead class="thead-dark">
-  <tr>
-    <th scope="col">Num Users</th>
-    <th scope="col">Suggestion Count</th>
-  </tr>
-</thead>
-<tbody>
-  {% for count, num_users in suggestion_counts.items() %}
-  <tr>
-    <td>{{num_users}}</td>
-    <td>&le; {{count}}</td>
-  </tr>
-  {% endfor %}
-</tbody>
-</table>

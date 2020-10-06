@@ -34,6 +34,7 @@ router = APIRouter()
 router.route_class = CompressibleRoute
 
 templates = Jinja2Templates(directory="templates")
+templates.env.add_extension("jinja2.ext.do")
 
 
 async def get_finalized_suggestions(
@@ -226,28 +227,25 @@ async def get_dashboard(
         ratings_by_model[model_name] = model_ratings
 
     cache_key = f"suggestion:*:metrics:correlations"
-    correlations: Dict[str, Dict[str, str]] = await cache.get(cache_key)
-    if cache_updates or correlations is None:
-        correlations = {k: {} for k in ratings}
+    all_correlations: Dict[str, Dict[str, Dict[str, float]]] = await cache.get(
+        cache_key
+    )
+    if cache_updates or all_correlations is None:
+        all_correlations = {k: {} for k in ratings}
 
         for (k1, v1), (k2, v2) in combinations(ratings.items(), 2):
             r, p = pearsonr(
                 [v1[k] for k in v2 if k in v1], [v2[k] for k in v1 if k in v2]
             )
 
-            correlation = f"{r:.2f}"
-            if p < 0.05:
-                correlation += "*"
-            if p < 0.01:
-                correlation += "*"
-            correlations[k1][k2] = correlation
+            all_correlations[k1][k2] = {"r": r, "p": p}
 
-        cache_updates.append(cache.set(cache_key, correlations))
+        cache_updates.append(cache.set(cache_key, all_correlations))
 
     cache_key = f"suggestion:*:metrics:correlations:by_model"
-    correlations_by_model: Dict[str, Dict[str, Dict[str, str]]] = await cache.get(
-        cache_key
-    )
+    correlations_by_model: Dict[
+        str, Dict[str, Dict[str, Dict[str, float]]]
+    ] = await cache.get(cache_key)
     if cache_updates or correlations_by_model is None:
         correlations_by_model = {
             model_name: {k: {} for k in ratings} for model_name in ratings_by_model
@@ -259,12 +257,7 @@ async def get_dashboard(
                     [v1[k] for k in v2 if k in v1], [v2[k] for k in v1 if k in v2]
                 )
 
-                correlation = f"{r:.2f}"
-                if p < 0.05:
-                    correlation += "*"
-                if p < 0.01:
-                    correlation += "*"
-                correlations_by_model[model_name][k1][k2] = correlation
+                correlations_by_model[model_name][k1][k2] = {"r": r, "p": p}
 
         cache_updates.append(cache.set(cache_key, correlations_by_model))
 
@@ -311,7 +304,7 @@ async def get_dashboard(
             "request": request,
             "models": all_models,
             "ratings": avg_ratings,
-            "correlations": correlations,
+            "all_correlations": all_correlations,
             "correlations_by_model": correlations_by_model,
             "ratings_by_type": ratings_by_type,
             "suggestion_counts": suggestion_counts,

@@ -78,7 +78,7 @@ function setupSuggestionsTable() {
 }
 
 function setupRatingsTables() {
-  $("[name=avg-rating-table").each(function() {
+  $("[name='avg-rating-table']").each(function() {
     $(this).DataTable({
       "info": false,
       "paging": false,
@@ -242,16 +242,59 @@ function setupJudgmentsButton() {
   }
 }
 
+function enableDropdowns() {
+  $('.dropdown-item').on('click',  function() {
+    var button = $(this).parent().siblings('button');
+    $(button).text($(this).text());
+    $(button).val($(this).text());
+  });
+
+  $('.dropdown-toggle').each(function() {
+    if (!$(this).hasClass("nav-link")) {
+      var originalText = $(this).text();
+      $(this).click(function() {
+        $(this).text(originalText);
+        $(this).removeClass("active");
+        $(this).siblings('.dropdown-menu').children('.dropdown-item').each(function() {
+          $(this).removeClass("active");
+        });
+      });
+    }
+  });
+}
+
+function enableMultitabs() {
+  $('[data-toggle="tab"]').on('click',  function() {
+    var target = $(this).attr('data-target');
+    if (!$(target).hasClass("active")) {
+      $(target).addClass("active");
+    }
+
+    var button = $(this).parent().siblings('button');
+    $(button).on('click', function() {
+      if ($(target).hasClass("active")) {
+        $(target).removeClass("active");
+      }
+    });
+  });
+}
+
+function enableTooltips() {
+  $('[data-toggle="tooltip"]').tooltip();
+}
+
+function enablePopovers() {
+  $('[data-toggle="popover"]').popover();
+}
+
 $(document).ready(function () {
   setupRatingsTables();
   setupSuggestionsTable();
   setupSentenceHistogram();
   setupJudgmentsButton();
 
-  $('.dropdown-item').on('click',  function(){
-    var btnObj = $(this).parent().siblings('button');
-    console.log("changing " + $(btnObj).text() + " to " + $(this).text());
-    $(btnObj).text($(this).text());
-    $(btnObj).val($(this).text());
-  });
+  enableDropdowns();
+  enableMultitabs();
+  enablePopovers();
+  enableTooltips();
 });

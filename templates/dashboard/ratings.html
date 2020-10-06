@@ -1,5 +1,5 @@
-<div class="d-flex flex-wrap justify-content-start">
-  <h2 class="mr-5">Average Ratings</h2>
+<div class="d-flex flex-wrap">
+  <h2 class="my-1 mr-3">Average Ratings</h2>
   <ul class="nav nav-tabs">
     <li class="nav-item dropdown">
       <button class="dropdown-toggle btn btn-lg btn-outline-dark text-capitalize" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -7,7 +7,7 @@
       </button>
       <div class="dropdown-menu" role="tablist">
         {% for type in ratings_by_type.keys() %}
-        <a class="dropdown-item text-capitalize" data-toggle="tab" href="#avg-{{type}}-rating">{{type}}</a>
+        <button class="dropdown-item text-capitalize" data-toggle="tab" data-target="#avg-{{type}}-rating">{{type}}</button>
         {% endfor %}
       </div>
     </li>

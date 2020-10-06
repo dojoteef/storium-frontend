@@ -1,0 +1,23 @@
+<h2>Histogram of Sentence Overlaps</h2>
+<div class="container px-sm-3 px-md-4 px-lg-5">
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 mx-sm-n3 mx-md-n4 mx-lg-n5 align-items-end">
+    {% for model in models %}
+    <div class="col py-3 px-sm-3 px-md-4 px-lg-5 sentence-histogram" name="{{model}}">
+      <div class="row justify-content-center" style="text-align: center;">
+        <b>{{model}}</b>
+      </div>
+      <div class="row justify-content-center">
+        <span class="alert alert-dark histogram-count" disabled>Total Overlaps:</span>
+      </div>
+      <div class="row justify-content-center">
+        <canvas class="histogram-canvas" width="400" height="400"></canvas>
+      </div>
+      <div class="row justify-content-center">
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary histogram-export" title="Export chart to SVG">Export</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

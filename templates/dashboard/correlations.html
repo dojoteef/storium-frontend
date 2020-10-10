@@ -1,11 +1,4 @@
-{% macro abbreviate(name) -%}
-  {% set parts=name.partition('-') %}
-  {% if parts[1] %}
-    {{ [parts[0][:1], parts[2]] | join }}
-  {% else %}
-    {{ parts[0][:1] }}
-  {% endif %}
-{%- endmacro %}
+{% import "utils.html" as utils %}
 
 {% macro correlation_font(p) -%}
   {% set classes=[] %}
@@ -33,7 +26,7 @@
           {%set ns=namespace(first=true) %}
           {% for x, row in correlations.items() %}
             {% if not ns.first %}
-            <th scope="col" class="text-capitalize text-center"><abbr title={{x}} data-toggle="tooltip" data-placement="top">{{abbreviate(x)}}</abbr></th>
+            <th scope="col" class="text-capitalize text-center"><abbr title={{x}} data-toggle="tooltip" data-placement="top">{{utils.abbreviate(x)}}</abbr></th>
             {% endif %}
             {% set ns.first=false %}
           {% endfor %}
@@ -42,7 +35,7 @@
       <tbody>
         {% for x, row in correlations.items() %}
           <tr>
-            <td class="bg-dark font-weight-bold text-white text-capitalize"><abbr title={{x}} data-toggle="tooltip" data-placement="right">{{abbreviate(x)}}</abbr></td>
+            <td class="bg-dark font-weight-bold text-white text-capitalize"><abbr title={{x}} data-toggle="tooltip" data-placement="right">{{utils.abbreviate(x)}}</abbr></td>
             {% for _ in range(loop.index - 1) %}
             <td class="text-center">&mdash;</td>
             {% endfor %}

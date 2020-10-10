@@ -30,6 +30,9 @@ from woolgatherer.utils.routing import CompressibleRoute
 from woolgatherer.utils import ngram_overlaps
 
 
+MAX_PUBLIC_EDITS = 10
+
+
 router = APIRouter()
 router.route_class = CompressibleRoute
 
@@ -153,7 +156,6 @@ async def get_dashboard(
 
             finalized_sentences = split_sentences(finalized)
             generated_sentences = split_sentences(generated)
-            overlaps = ngram_overlaps(finalized_sentences, generated_sentences)
 
             rouge_scores = rouge.get_scores(
                 [" ".join(remove_stopwords(generated))],
@@ -165,7 +167,6 @@ async def get_dashboard(
             suggestion_metrics["rouge_scores"] = rouge_scores
             suggestion_metrics["finalized_sentences"] = finalized_sentences
             suggestion_metrics["generated_sentences"] = generated_sentences
-            suggestion_metrics["overlaps"] = overlaps
             cache_updates.append(cache.set(cache_key, suggestion_metrics))
 
         diff = suggestion_metrics["diff"]
@@ -173,16 +174,8 @@ async def get_dashboard(
         rouge_scores = suggestion_metrics["rouge_scores"]
         finalized_sentences = suggestion_metrics["finalized_sentences"]
         generated_sentences = suggestion_metrics["generated_sentences"]
-        overlaps = suggestion_metrics["overlaps"]
 
-        edit = {
-            "diff": diff,
-            "game_pid": game_pid,
-            "model_name": model_name,
-            "overlaps": len(overlaps),
-            "finalized_sentences": len(finalized_sentences),
-            "generated_sentences": len(generated_sentences),
-        }
+        edit = {"diff": diff, "game_pid": game_pid, "model_name": model_name}
 
         for feedback in (
             "comments",
@@ -223,7 +216,9 @@ async def get_dashboard(
             model_scores[idx] = precision
             model_ratings[rouge_type] = model_scores
 
-        edits.append(edit)
+        if len(edits) < MAX_PUBLIC_EDITS:
+            edits.append(edit)
+
         ratings_by_model[model_name] = model_ratings
 
     cache_key = f"suggestion:*:metrics:correlations"

@@ -1,0 +1,8 @@
+{% macro abbreviate(name) -%}
+  {% set parts=name.partition('-') %}
+  {% if parts[1] %}
+    {{ [parts[0][:1], parts[2]] | join }}
+  {% else %}
+    {{ parts[0][:1] }}
+  {% endif %}
+{%- endmacro %}

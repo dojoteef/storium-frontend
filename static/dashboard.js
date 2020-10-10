@@ -1,39 +1,5 @@
 function setupSuggestionsTable() {
-  suggestions_table = $("#suggestions-table").DataTable({
-    "columnDefs": [
-      // Suggestion #
-      {"targets": 0, "orderData": 0, "type": "num", "searchable": false},
-
-      // Game PID
-      {"targets": 1, "orderData": 1, "searchable": true},
-
-      // Model
-      {"targets": 2, "orderData": [0, 2]},
-
-      // Sentence stats
-      {"targets": 3, "orderData": 3, "type": "num", "searchable": false},
-      {"targets": 4, "orderData": 4, "type": "num", "searchable": false},
-      {"targets": 5, "orderData": 5, "type": "num", "searchable": false},
-
-      // Rouge Precision
-      {"targets": 6, "orderData": 6, "type": "num", "visible": false, "searchable": false},
-      {"targets": 7, "orderData": 7, "type": "num", "visible": false, "searchable": false},
-      {"targets": 8, "orderData": 8, "type": "num", "visible": false, "searchable": false},
-      {"targets": 9, "orderData": 9, "type": "num", "visible": false, "searchable": false},
-
-      // Rouge Recall
-      {"targets": 10, "orderData": 10, "type": "num", "visible": false, "searchable": false},
-      {"targets": 11, "orderData": 11, "type": "num", "visible": false, "searchable": false},
-      {"targets": 12, "orderData": 12, "type": "num", "visible": false, "searchable": false},
-      {"targets": 13, "orderData": 13, "type": "num", "visible": false, "searchable": false},
-
-      // Rouge F1
-      {"targets": 14, "orderData": 14, "type": "num", "visible": false, "searchable": false},
-      {"targets": 15, "orderData": 15, "type": "num", "visible": false, "searchable": false},
-      {"targets": 16, "orderData": 16, "type": "num", "visible": false, "searchable": false},
-      {"targets": 17, "orderData": 17, "type": "num", "visible": false, "searchable": false}
-    ]
-  });
+  suggestions_table = $("#suggestions-table").DataTable();
 
   // Create the select list and search operation
   model_column = suggestions_table.column(2);
@@ -57,13 +23,13 @@ function setupSuggestionsTable() {
       select.append($('<option value="'+d+'">'+d+'</option>'));
     });
 
-  // Create the Rouge Score selector
-  var visible_columns = suggestions_table.columns('.rouge.precision').visible(true, false);
+  // Create the Metric selector
+  var visible_columns = suggestions_table.columns('.metric.precision').visible(true, false);
   var select = $('<select class="custom-select custom-select-sm form-control form-control-sm" />')
-    .appendTo($('#rouge'))
+    .appendTo($('#metric'))
     .on('change', function() {
       visible_columns.visible(false, false);
-      visible_columns = suggestions_table.columns('.rouge.'+$(this).val()).visible(true, false);
+      visible_columns = suggestions_table.columns('.metric.'+$(this).val()).visible(true, false);
     });
   select.append($('<option value="precision">Precision</option>'));
   select.append($('<option value="recall">Recall</option>'));

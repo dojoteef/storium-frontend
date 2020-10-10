@@ -1,23 +1,24 @@
-{% set rouge_types = ('rouge-4', 'rouge-l', 'rouge-w', 'user') %}
-<h2>Edited Suggestions</h2>
-<table id="suggestions-table" class="table table-striped text-center invisible" style="width:100%">
+{% import "utils.html" as utils %}
+{% set metric_types = ('rouge-4', 'rouge-l', 'rouge-w', 'user') %}
+
+<h2>Sample Edited Suggestions</h2>
+<!-- Set empty dom to hide paging and search functionality see https://datatables.net/reference/option/dom -->
+<table id="suggestions-table" data-dom="" data-order-classes="true" class="table table-striped text-center invisible" style="width:100%">
   <thead class="thead-dark">
     <tr>
-      <th rowspan="2" class="align-middle" scope="col">#</th>
-      <th rowspan="2" class="align-middle" scope="col">PID</th>
-      <th rowspan="2" class="align-top" scope="col">Model</th>
-      <th colspan="3" class="align-top" scope="col">#Sentences</th>
-      <th colspan="12" class="align-top" scope="col" id="rouge">Rouge/User</th>
+      <th rowspan="2" class="align-middle" scope="col" data-order-data="0" data-type="num" data-searchable="false">#</th>
+      <th rowspan="2" class="align-middle" scope="col" data-order-data="1">PID</th>
+      <th rowspan="2" class="align-top" scope="col" data-order-data="[[0, 2]]" data-searchable="true">Model</th>
+      <th colspan="12" class="align-top" scope="col" id="metric">Metric</th>
     </tr>
     <tr>
-      <th class="align-top" scope="col">User</th>
-      <th class="align-top" scope="col">Model</th>
-      <th class="align-top" scope="col">Overlap</th>
+      {% set ns=namespace(idx=3, visible="true") %}
       {% for metric in ('precision', 'recall', 'f1') %}
-      <th class="align-top rouge {{metric}}" scope="col">4</th>
-      <th class="align-top rouge {{metric}}" scope="col">L</th>
-      <th class="align-top rouge {{metric}}" scope="col">W</th>
-      <th class="align-top rouge {{metric}}" scope="col">U</th>
+      {% for metric_type in metric_types %}
+      <th class="align-top metric {{metric}} text-capitalize" scope="col" data-order-data="{{ns.idx}}" data-type="num" data-visible="{{ns.visible}}"><abbr title={{metric_type}} data-toggle="tooltip" data-placement="top">{{utils.abbreviate(metric_type)}}</abbr></th>
+      {% set ns.idx=ns.idx+1 %}
+      {% endfor %}
+      {% set ns.visible="false" %}
       {% endfor %}
     </tr>
   </thead>
@@ -27,13 +28,10 @@
       <th scope="row">{{loop.index}}</span></th>
       <td scope="row">{{edit.game_pid}}</td>
       <td scope="row">{{edit.model_name}}</td>
-      <td scope="row">{{edit.finalized_sentences}}</td>
-      <td scope="row">{{edit.generated_sentences}}</td>
-      <td scope="row">{{edit.overlaps}}</td>
       {% for metric in ('p', 'r', 'f') %}
-      {% for rouge_type in rouge_types %}
+      {% for metric_type in metric_types %}
       <td scope="row">
-          {{"{:.2f}".format(edit[rouge_type][metric])}}
+          {{"{:.2f}".format(edit[metric_type][metric])}}
       </td>
       {% endfor %}
       {% endfor %}

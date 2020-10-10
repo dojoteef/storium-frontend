@@ -17,12 +17,12 @@ body {
 }
 
 .website-icon {
-  width: 66px;
-  height: 66px;
-  background-size: 126px;
+  width: 44px;
+  height: 44px;
+  background-size: 44px;
   background-repeat: no-repeat;
   background-position: center;
-  background-image: url("/static/umass_ngram.svg");
+  background-image: url("/static/figment.svg");
 }
 
 .storium-logo {

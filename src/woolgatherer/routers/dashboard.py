@@ -18,7 +18,6 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from scipy.stats import pearsonr
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, StreamingResponse
-from starlette.templating import Jinja2Templates
 from starlette.status import HTTP_406_NOT_ACCEPTABLE
 
 from woolgatherer.db.session import get_db
@@ -27,6 +26,7 @@ from woolgatherer.db_models.figmentator import FigmentatorStatus
 from woolgatherer.metrics import get_diff_score, remove_stopwords, rouge
 from woolgatherer.models.range import split_sentences
 from woolgatherer.utils.routing import CompressibleRoute
+from woolgatherer.utils.templating import templates
 from woolgatherer.utils import ngram_overlaps
 
 
@@ -35,9 +35,6 @@ MAX_PUBLIC_EDITS = 10
 
 router = APIRouter()
 router.route_class = CompressibleRoute
-
-templates = Jinja2Templates(directory="templates")
-templates.env.add_extension("jinja2.ext.do")
 
 
 async def get_finalized_suggestions(

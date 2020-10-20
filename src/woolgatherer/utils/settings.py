@@ -18,7 +18,9 @@ from woolgatherer.models.suggestion import SceneEntryParameters
 class _DevSettings(BaseSettings):
     """ The basic app settings that don't require Postgres """
 
-    cache_url: str = Field("memory://", dsecription="The URL for the cache")
+    gtag_id: str = Field("", description="Google analytics ID")
+
+    cache_url: str = Field("memory://", description="The URL for the cache")
 
     broker_url: str = Field(
         "sqla+sqlite:///task_queue.db", description="The URL for the task broker"

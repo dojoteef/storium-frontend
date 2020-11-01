@@ -87,10 +87,14 @@ setup(
         "aiohttp==3.6.2",
         "alembic==1.2.1",
         "alembic-autogenerate-enums==0.0.2",
+        "authlib==0.15.2",
+        "httpx==0.16.1",  # required by authlib
         "celery==4.3.0",
         "jinja2==2.10.3",
         "asgiref==3.2.2",
         "fastapi==0.45.0",
+        "markdown==3.3.3",
+        "itsdangerous==1.1.0",  # required by starlette for sessions
         "regex==2020.1.8",
         "pydantic==1.1.1",
         "uvicorn==0.10.0",

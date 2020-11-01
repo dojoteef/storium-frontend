@@ -167,7 +167,7 @@ function setupJudgmentsButton() {
     text = element.children().first().detach()
 
     // Must open the GET request before setting headers
-    httpRequest.open('GET', '/dashboard/judgement/contexts?limit=' + $('#judgementCount').val());
+    httpRequest.open('GET', '/judgement/contexts?limit=' + $('#judgementCount').val());
     if (element.prop('id') == 'judgementCSV') {
       httpRequest.setRequestHeader('Accept', 'text/csv');
       httpRequest.onreadystatechange = downloadJudgements(httpRequest, element, spinner, text, 'csv');
@@ -192,7 +192,12 @@ function setupJudgmentsButton() {
       element.prop('disabled', false);
 
       if (httpRequest.status != 200) {
-        alert("Invalid response from server!");
+        var alertText = `Error ${httpRequest.status}: ${httpRequest.statusText}`;
+        var response = JSON.parse(httpRequest.responseText);
+        if (response && response.detail) {
+          alertText += `\n${response.detail}`;
+        }
+        alert(alertText);
         return;
       }
 

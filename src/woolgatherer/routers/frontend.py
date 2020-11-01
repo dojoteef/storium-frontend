@@ -1,6 +1,10 @@
 """
 This router handles the website frontend
 """
+import os
+
+import aiofiles
+import markdown
 from fastapi import APIRouter
 from starlette.requests import Request
 
@@ -11,6 +15,17 @@ from woolgatherer.utils.templating import templates
 router = APIRouter()
 router.route_class = CompressibleRoute
 
+LICENSE = ""
+
+
+async def initialize():
+    """ Initialize the frontend """
+    global LICENSE  # pylint: disable=global-statement
+    async with aiofiles.open(
+        os.path.join("dataset", "LICENSE.md"), "rt"
+    ) as license_file:
+        LICENSE = markdown.markdown(await license_file.read())
+
 
 @router.get("/", summary="Get the frontend for the woolgatherer service")
 async def get_dashboard(request: Request):
@@ -18,4 +33,6 @@ async def get_dashboard(request: Request):
     This method returns a template for the website frontend
     """
 
-    return templates.TemplateResponse("frontend/index.html", {"request": request})
+    return templates.TemplateResponse(
+        "frontend/index.html", {"request": request, "license": LICENSE}
+    )

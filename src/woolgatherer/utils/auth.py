@@ -1,10 +1,13 @@
 """
 Authentication utils
 """
-from typing import Optional, Sequence, Tuple, Union
+import logging
+from urllib.parse import quote_plus
+from typing import List, Optional, Sequence, Tuple, Union
 
 from fastapi import HTTPException
 from starlette.requests import HTTPConnection, Request
+from starlette.responses import RedirectResponse
 from starlette.authentication import (
     has_required_scope,
     AuthenticationBackend,
@@ -12,7 +15,21 @@ from starlette.authentication import (
     SimpleUser,
     AuthCredentials,
 )
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_303_SEE_OTHER, HTTP_403_FORBIDDEN
+
+from woolgatherer.errors import UnauthorizedError
+
+
+def parse_scopes(conn: HTTPConnection):
+    """ Parse the scopes the user has access to """
+    # See if there is a logged in user and what roles they have
+    user = conn.session.get("user")
+    if user:
+        resources = user.get("resource_access", {})
+        resource = resources.get(user.get("azp", ""), {})
+        return resource.get("roles", [])
+
+    return []
 
 
 class Requires:
@@ -30,6 +47,15 @@ class Requires:
 
     def __call__(self, request: Request):
         if not has_required_scope(request, self.scopes):
+            if self.redirect is not None:
+                # Ask the top-level router for the app what the url is for the
+                # redirect. That's because FastAPI doesn't maintain a router
+                # hierarchy like Starlette does
+                redirect = request.app.router.url_path_for(self.redirect)
+                raise UnauthorizedError(
+                    RedirectResponse(url=redirect, status_code=HTTP_303_SEE_OTHER)
+                )
+
             raise HTTPException(self.status_code)
 
 
@@ -43,14 +69,16 @@ class TokenAuthBackend(AuthenticationBackend):
         self, conn: HTTPConnection
     ) -> Optional[Tuple[AuthCredentials, BaseUser]]:
         """ Perform authentication using a shared token """
-        if self.token is None:
-            # Not setting a token indicates we allow anyone to authenticate.
-            # This is useful for dev and staging environments.
-            return AuthCredentials(["backend"]), SimpleUser("admin")
+        roles: List[str] = []
+        username = "<unknown>"
+
+        # See if there is a logged in user and what roles they have
+        user = conn.session.get("user", {})
+        username = user.get("username", username)
+        roles.extend(parse_scopes(conn))
 
         # See if the correct token has been passed as a query param
         if conn.query_params.get("token", None) == self.token:
-            return AuthCredentials(["backend"]), SimpleUser("admin")
+            roles.append("backend")
 
-        # Otherwise no authentication credentials
-        return None
+        return AuthCredentials(roles), SimpleUser(username)

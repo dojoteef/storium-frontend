@@ -32,11 +32,11 @@
         {% include "dashboard/histograms.html" %}
       </section>
 
-      <!-- Hide data exports until auth layer is implemented
+      {% if "judgement" in scopes %}
       <section id="data-exports">
         {% include "dashboard/exports.html" %}
       </section>
-      -->
+      {% endif %}
 
       <section id="edits">
         {% include "dashboard/edits.html" %}

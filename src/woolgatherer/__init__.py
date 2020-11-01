@@ -1,18 +1,23 @@
 """
 Main entry point for woolgatherer. This is where we setup the app.
 """
-import os
+import logging
 import urllib
 from typing import Any, Dict
 
 import aiocache
 from fastapi import Depends, FastAPI
+from fastapi.exceptions import HTTPException
+from fastapi.exception_handlers import http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.authentication import AuthenticationMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.staticfiles import StaticFiles
 from starlette.status import (
+    HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_503_SERVICE_UNAVAILABLE,
@@ -20,27 +25,58 @@ from starlette.status import (
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from woolgatherer.db.session import open_connection_pool, close_connection_pool
-from woolgatherer.errors import InvalidOperationError, InsufficientCapacityError
+from woolgatherer.errors import (
+    InvalidOperationError,
+    InsufficientCapacityError,
+    UnauthorizedError,
+)
 from woolgatherer.metrics import initialize_metrics
-from woolgatherer.routers import dashboard, frontend, stories, suggestions
+from woolgatherer.routers import (
+    account,
+    dashboard,
+    data,
+    frontend,
+    judgement,
+    stories,
+    suggestions,
+)
 from woolgatherer.utils.auth import Requires, TokenAuthBackend
 from woolgatherer.utils.settings import Settings
 
 
-app = FastAPI(debug=bool(int(os.environ.get("DEBUG", 0))))
+app = FastAPI(debug=Settings.debug)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     AuthenticationMiddleware,
-    backend=TokenAuthBackend(os.environ.get("GW_ACCESS_TOKEN")),
+    backend=TokenAuthBackend(Settings.access_token),  # type: ignore
 )
-app.add_middleware(
-    ProxyHeadersMiddleware,
-    trusted_hosts=os.environ.get("FORWARDED_ALLOW_IPS", "127.0.0.1"),
-)
+app.add_middleware(SessionMiddleware, secret_key=Settings.session_token)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=Settings.trusted_hosts)
 
 app.include_router(frontend.router, prefix="", tags=["frontend"])
+app.include_router(account.router, prefix="/account", tags=["account"])
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+app.include_router(
+    data.router,
+    prefix="/data",
+    tags=["data"],
+    dependencies=[
+        Depends(
+            Requires("dataset", status_code=HTTP_401_UNAUTHORIZED, redirect="login")
+        )
+    ],
+)
+app.include_router(
+    judgement.router,
+    prefix="/judgement",
+    tags=["judgement"],
+    dependencies=[
+        Depends(
+            Requires("judgement", status_code=HTTP_401_UNAUTHORIZED, redirect="login")
+        )
+    ],
+)
 app.include_router(
     stories.router,
     prefix="/stories",
@@ -58,6 +94,7 @@ app.add_event_handler("startup", open_connection_pool)
 app.add_event_handler("shutdown", close_connection_pool)
 
 app.add_event_handler("startup", initialize_metrics)
+app.add_event_handler("startup", frontend.initialize)
 
 
 @app.on_event("startup")
@@ -108,3 +145,12 @@ async def insufficent_capacity_exception_handler(
     return JSONResponse(
         status_code=HTTP_503_SERVICE_UNAVAILABLE, content={"message": str(exception)}
     )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def override_http_exception_handler(request: Request, exception: HTTPException):
+    """ A handler for validation errors """
+    if isinstance(exception, UnauthorizedError):
+        return exception.redirect
+
+    return await http_exception_handler(request, exception)

@@ -23,14 +23,36 @@
           <div class="d-flex flex-wrap justify-content-center">
             <div class="btn btn-group">
               <a class="btn btn-lg btn-info" href="https://arxiv.org/abs/2010.01717" role="button" title="Paper">Paper</a>
-              <a class="btn btn-lg btn-info" href="https://drive.google.com/open?id=tbd" role="button" title="Dataset">Dataset</a>
+              <button type="button" class="btn btn-lg btn-info" data-toggle="modal" data-target="#downloadDataset">Dataset</button>
               <button type="button" class="btn btn-lg btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 Code
               </button>
               <div class="dropdown-menu">
-                <a class="dropdown-item" href="https://github.com/dojoteef/storium">Model</a>
+                <a class="dropdown-item" href="https://github.com/dojoteef/storium-gpt2">Model</a>
                 <a class="dropdown-item" href="https://github.com/dojoteef/storium-backend">Backend</a>
                 <a class="dropdown-item" href="https://github.com/dojoteef/storium-frontend">Frontend</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data download modal -->
+        <div class="modal fade" id="downloadDataset" tabindex="-1" aria-labelledby="downloadDatasetLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="downloadDatasetLabel">Data Transfer and Use Agreement</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                {{ license|safe }}
+              </div>
+              <div class="modal-footer">
+                By clicking "Download Dataset" you are consenting to be bound by the above Agreement.
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <a class="btn btn-info" href="/data/download" role="button" title="Download Dataset">Download Dataset</a>
+              </div>
             </div>
           </div>
         </div>

@@ -32,3 +32,7 @@ deploy
 # site specific yaml
 docker-compose.env.yml
 docker-compose.*.env.yml
+
+
+# the actual dataset
+dataset/*.tar.gz

@@ -1,9 +1,9 @@
 """
 Encapsulate the configuration for woolgatherer
 """
-from typing import Tuple
+from typing import Optional, Tuple
 
-from pydantic import BaseSettings, Field
+from pydantic import BaseSettings, Field, SecretStr
 
 from woolgatherer.db.utils import has_postgres
 from woolgatherer.models.feedback import (
@@ -18,15 +18,31 @@ from woolgatherer.models.suggestion import SceneEntryParameters
 class _DevSettings(BaseSettings):
     """ The basic app settings that don't require Postgres """
 
+    debug: bool = Field(False, description="Whether to enable debugging", env="DEBUG")
+
+    access_token: Optional[SecretStr] = Field(None, description="API access token")
+    session_token: SecretStr = Field("secret", description="API access token")
+
+    dataset: str = Field(None, description="Filename for the dataset")
+
     gtag_id: str = Field("", description="Google analytics ID")
 
-    cache_url: str = Field("memory://", description="The URL for the cache")
+    oauth_url: str = Field(None, description="The URL for openid config")
+    oauth_client_id: str = Field("storium", description="The oauth client id")
+    oauth_client_secret: str = Field(None, description="The oauth client secret")
 
+    cache_url: str = Field("memory://", description="The URL for the cache")
     broker_url: str = Field(
         "sqla+sqlite:///task_queue.db", description="The URL for the task broker"
     )
     dsn: str = Field(
         "sqlite:///woolgatherer.db", description="The URL for the DB connection"
+    )
+
+    trusted_hosts: str = Field(
+        "127.0.0.1",
+        env="FORWARDED_ALLOW_IPS",
+        description="Trusted hosts for ProxyHeadersMiddleware",
     )
 
     scene_entry_parameters: SceneEntryParameters = Field(

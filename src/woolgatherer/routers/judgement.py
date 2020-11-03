@@ -11,9 +11,8 @@ from typing import Any, AsyncGenerator, Dict, Mapping, Sequence
 import aiofiles
 from databases import Database
 from fastapi import APIRouter, Depends, Header, HTTPException
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_406_NOT_ACCEPTABLE
+from starlette.status import HTTP_406_NOT_ACCEPTABLE
 from starlette.responses import PlainTextResponse, StreamingResponse
-from starlette.requests import Request
 
 from woolgatherer.db.session import get_db
 from woolgatherer.db.utils import load_query
@@ -52,7 +51,6 @@ async def select_judgement_contexts(
     response_class=PlainTextResponse,
 )
 async def get_judgement_contexts(
-    request: Request,
     limit: int = 0,
     status: FigmentatorStatus = FigmentatorStatus.active,
     accept: str = Header(None),

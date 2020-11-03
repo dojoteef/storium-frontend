@@ -9,7 +9,7 @@ from fastapi import APIRouter
 from starlette.requests import Request
 
 from woolgatherer.utils.routing import CompressibleRoute
-from woolgatherer.utils.templating import templates
+from woolgatherer.utils.templating import TemplateResponse
 
 
 router = APIRouter()
@@ -32,7 +32,4 @@ async def get_dashboard(request: Request):
     """
     This method returns a template for the website frontend
     """
-
-    return templates.TemplateResponse(
-        "frontend/index.html", {"request": request, "license": LICENSE}
-    )
+    return TemplateResponse(request, "frontend/index.html", {"license": LICENSE})

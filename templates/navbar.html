@@ -40,5 +40,12 @@
           </div>
         </div>
       </li>
+      <li class="nav-item">
+        {% if request.session.get("user", None) %}
+        <a class="nav-link text-secondary" href="{{url_for('logout')}}">Logout</a>
+        {% else %}
+        <a class="nav-link text-secondary" href="{{url_for('login')}}">Login</a>
+        {% endif %}
+      </li>
   </div>
 </nav>

@@ -2,29 +2,12 @@
 This router handles the website frontend
 """
 from fastapi import APIRouter
-from starlette.config import Config
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
-from authlib.integrations.starlette_client import OAuth
 
-from woolgatherer.utils.settings import Settings
+from woolgatherer.utils.auth import oauth
 
-
-oauth = OAuth(
-    Config(
-        environ={
-            "STORIUM_CLIENT_ID": Settings.oauth_client_id,
-            "STORIUM_CLIENT_SECRET": Settings.oauth_client_secret,
-        }
-    )
-)
 router = APIRouter()
-
-oauth.register(
-    name="storium",
-    server_metadata_url=Settings.oauth_url,
-    client_kwargs={"scope": "openid"},
-)
 
 
 @router.get("/login", summary="Login to the dashboard")
@@ -32,6 +15,9 @@ async def login(request: Request):
     """
     This method initiates a login
     """
+    if request.session.get("user"):
+        return RedirectResponse(url="/")
+
     redirect = request.url_for("auth")
     return await oauth.storium.authorize_redirect(request, redirect)
 
@@ -44,6 +30,7 @@ async def auth(request: Request):
     token = await oauth.storium.authorize_access_token(request)
     user = await oauth.storium.parse_id_token(request, token)
     request.session["user"] = dict(user)
+    request.session["refresh_token"] = token.get("refresh_token")
     return RedirectResponse(url="/")
 
 
@@ -53,4 +40,8 @@ async def logout(request: Request):
     This method logs a user out
     """
     request.session.pop("user", None)
+    refresh_token = request.session.pop("refresh_token", None)
+    if refresh_token:
+        await oauth.storium.revoke_token(refresh_token)
+
     return RedirectResponse(url="/")

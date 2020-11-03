@@ -21,7 +21,7 @@ from woolgatherer.metrics import get_diff_score, remove_stopwords, rouge
 from woolgatherer.models.range import split_sentences
 from woolgatherer.utils.auth import parse_scopes
 from woolgatherer.utils.routing import CompressibleRoute
-from woolgatherer.utils.templating import templates
+from woolgatherer.utils.templating import TemplateResponse
 from woolgatherer.utils import ngram_overlaps
 
 
@@ -263,13 +263,12 @@ async def get_dashboard(
     if cache_updates:
         await gather(*cache_updates)
 
-    return templates.TemplateResponse(
+    return TemplateResponse(
+        request,
         "dashboard/index.html",
         {
             "edits": edits,
-            "request": request,
             "models": all_models,
-            "scopes": scopes,
             "ratings": avg_ratings,
             "all_correlations": all_correlations,
             "correlations_by_model": correlations_by_model,

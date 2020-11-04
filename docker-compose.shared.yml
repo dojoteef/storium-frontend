@@ -23,7 +23,17 @@ services:
     image: postgres:12-alpine
     volumes:
       - woolgatherer-db-data:/var/lib/postgresql/data
+      - type: bind
+        source: ./keycloak/scripts/create_db_user.sh
+        target: /docker-entrypoint-initdb.d/10-create-keycloak-user.sh
+      - type: bind
+        source: ./keycloak/scripts/create_db.sh
+        target: /docker-entrypoint-initdb.d/20-create-keycloak-db.sh
     restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      KEYCLOAK_DB_NAME: keycloak
+      KEYCLOAK_DB_USER: keycloak
   queue:
     image: rabbitmq:3-alpine
     restart: unless-stopped

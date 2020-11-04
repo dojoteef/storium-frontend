@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+POSTGRES="psql --username ${POSTGRES_USER}"
+
+echo "Creating database: ${KEYCLOAK_DB_NAME}"
+
+$POSTGRES <<EOSQL
+CREATE DATABASE ${KEYCLOAK_DB_NAME} OWNER ${KEYCLOAK_DB_USER};
+EOSQL

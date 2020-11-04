@@ -26,7 +26,7 @@ class _DevSettings(BaseSettings):
     )
 
     access_token: Optional[SecretStr] = Field(None, description="API access token")
-    session_token: SecretStr = Field("secret", description="API access token")
+    session_token: SecretStr = Field("secret", description="Session cookie token")
 
     dataset: str = Field(None, description="Filename for the dataset")
 

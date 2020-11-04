@@ -8,6 +8,7 @@ from authlib.common.urls import extract_params, add_params_to_qs
 from authlib.integrations.base_client import OAuthError
 from authlib.integrations.starlette_client import OAuth
 from fastapi import HTTPException
+from pydantic import SecretStr
 from starlette.config import Config
 from starlette.requests import HTTPConnection, Request
 from starlette.responses import RedirectResponse
@@ -17,6 +18,7 @@ from starlette.authentication import (
     BaseUser,
     SimpleUser,
     AuthCredentials,
+    UnauthenticatedUser,
 )
 from starlette.status import HTTP_303_SEE_OTHER, HTTP_403_FORBIDDEN
 
@@ -180,24 +182,31 @@ class Requires:
 class TokenAuthBackend(AuthenticationBackend):
     """ Backend that uses a shared token for authentication """
 
-    def __init__(self, token: Optional[str]):
+    def __init__(self, token: Optional[SecretStr]):
         self.token = token
 
     async def authenticate(
         self, conn: HTTPConnection
-    ) -> Optional[Tuple[AuthCredentials, BaseUser]]:
-        """ Perform authentication using a shared token """
+    ) -> Tuple[AuthCredentials, BaseUser]:
+        """ Perform authentication using a shared token or oauth """
         roles: List[str] = []
-        username = "<unknown>"
 
         # See if there is a logged in user and what roles they have
         await validate_refresh_token(conn)
-        user = conn.session.get("user", {})
-        username = user.get("username", username)
         roles.extend(parse_scopes(conn))
+        username = conn.session.get("user", {}).get("username")
 
         # See if the correct token has been passed as a query param
-        if conn.query_params.get("token") == self.token:
+        if (
+            self.token is None
+            or conn.query_params.get("token") == self.token.get_secret_value()
+        ):
+            if not username:
+                username = "backend"
             roles.append("backend")
 
-        return AuthCredentials(roles), SimpleUser(username)
+        credentials = AuthCredentials(roles)
+        if username:
+            return credentials, SimpleUser(username)
+
+        return credentials, UnauthenticatedUser()

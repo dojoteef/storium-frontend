@@ -47,10 +47,11 @@ app = FastAPI(debug=Settings.debug)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
-    AuthenticationMiddleware,
-    backend=TokenAuthBackend(Settings.access_token),  # type: ignore
+    AuthenticationMiddleware, backend=TokenAuthBackend(Settings.access_token)
 )
-app.add_middleware(SessionMiddleware, secret_key=Settings.session_token)
+app.add_middleware(
+    SessionMiddleware, secret_key=Settings.session_token.get_secret_value()
+)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=Settings.trusted_hosts)
 
 app.include_router(frontend.router, prefix="", tags=["frontend"])

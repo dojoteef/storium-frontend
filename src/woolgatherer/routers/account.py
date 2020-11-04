@@ -6,7 +6,9 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
 from woolgatherer.utils.auth import oauth
+from woolgatherer.utils.logging import get_logger
 
+logger = get_logger()
 router = APIRouter()
 
 
@@ -31,6 +33,7 @@ async def auth(request: Request):
     user = await oauth.storium.parse_id_token(request, token)
     request.session["user"] = dict(user)
     request.session["refresh_token"] = token.get("refresh_token")
+    logger.trace(str(user))
     return RedirectResponse(url="/")
 
 

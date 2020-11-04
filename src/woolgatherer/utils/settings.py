@@ -18,7 +18,12 @@ from woolgatherer.models.suggestion import SceneEntryParameters
 class _DevSettings(BaseSettings):
     """ The basic app settings that don't require Postgres """
 
-    debug: bool = Field(False, description="Whether to enable debugging", env="DEBUG")
+    loglevel: str = Field(
+        "info", description="Logging level", env=["GW_LOGLEVEL", "LOGLEVEL"]
+    )
+    debug: bool = Field(
+        False, description="Whether to enable debugging", env=["GW_DEBUG", "DEBUG"]
+    )
 
     access_token: Optional[SecretStr] = Field(None, description="API access token")
     session_token: SecretStr = Field("secret", description="API access token")

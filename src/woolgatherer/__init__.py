@@ -1,7 +1,6 @@
 """
 Main entry point for woolgatherer. This is where we setup the app.
 """
-import logging
 import urllib
 from typing import Any, Dict
 

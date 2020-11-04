@@ -1,7 +1,6 @@
 """
 Operations which can be conducted on stories
 """
-import logging
 from typing import Any, Dict, Optional
 
 from databases import Database
@@ -11,6 +10,10 @@ from woolgatherer.db.utils import json_hash, load_query
 from woolgatherer.errors import InsufficientCapacityError
 from woolgatherer.tasks import stories
 from woolgatherer.ops import figmentator as figmentator_ops
+from woolgatherer.utils.logging import get_logger
+
+
+logger = get_logger()
 
 
 async def create_story(story_dict: Dict[str, Any], *, db: Database) -> str:
@@ -29,23 +32,23 @@ async def create_story(story_dict: Dict[str, Any], *, db: Database) -> str:
 
         story = Story(story=story_json, hash=story_hash, status=StoryStatus.pending)
         if not status:
-            logging.debug("Creating story for story_id: %s", story_hash)
+            logger.debug("Creating story for story_id: %s", story_hash)
             await story.insert(db)
         else:
-            logging.debug(
+            logger.debug(
                 "Updating story status to pending for story_id: %s", story_hash
             )
             await story.update(db, where={"hash": story_hash})
 
         task = stories.process.delay(story_hash, [f.dict() for f in figmentators])
-        logging.debug("Started task %s", task.id)
+        logger.debug("Started task %s", task.id)
 
     return story_hash
 
 
 async def get_story_status(story_hash: str, *, db: Database) -> Optional[StoryStatus]:
     """ Get the current story status """
-    logging.debug("Getting story status for story_id: %s", story_hash)
+    logger.debug("Getting story status for story_id: %s", story_hash)
     story = await Story.select(db, "status", {"hash": story_hash})
     return story.status if story else None
 

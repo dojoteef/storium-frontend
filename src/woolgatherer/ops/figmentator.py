@@ -1,7 +1,6 @@
 """
 Operations on suggestion generators
 """
-import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from yarl import URL
@@ -14,6 +13,10 @@ from woolgatherer.db_models.storium import Story, StoryStatus
 from woolgatherer.db_models.suggestion import Suggestion
 from woolgatherer.errors import InsufficientCapacityError
 from woolgatherer.models.range import compute_next_range
+from woolgatherer.utils.logging import get_logger
+
+
+logger = get_logger()
 
 
 # Need both clauses: one to statisfy PostgreSQL and the other for SQLite
@@ -70,7 +73,7 @@ WHERE
 
 async def select_figmentators(*, db: Database) -> List[Figmentator]:
     """ Select one generator per suggestion type """
-    logging.debug("Selecting active figmentators")
+    logger.debug("Selecting active figmentators")
     results = await db.fetch_all(LOAD_BALANCE_QUERY)
     return [Figmentator.db_construct(row) for row in results]
 
@@ -97,7 +100,7 @@ async def reassign_figmentator(
     """ Reassign the story to a new figmentator for the given suggestion """
     story = await Story.select(db, where={"hash": suggestion.story_hash})
     if not story:
-        logging.error("Story %s not found in database!", suggestion.story_hash)
+        logger.error("Story %s not found in database!", suggestion.story_hash)
         return None
 
     figmentators = [
@@ -122,7 +125,7 @@ async def reassign_figmentator(
             story.status = StoryStatus.failed
         await story.update(db)
 
-    logging.info("Reprocessed story=%s, status=%s", story.hash, story.status)
+    logger.info("Reprocessed story=%s, status=%s", story.hash, story.status)
 
     return new_figmentator
 
@@ -138,7 +141,7 @@ async def figmentate(
         computed_range = compute_next_range(
             suggestion.generated.description or "", **suggestion.figment_settings
         )
-        logging.info("Posting range: %s", computed_range)
+        logger.info("Posting range: %s", computed_range)
         async with session.post(
             url.with_query(suggestion_type=suggestion.type.value),
             json=suggestion.generated.dict(),

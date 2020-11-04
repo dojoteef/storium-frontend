@@ -44,6 +44,10 @@ services:
       DB_SCHEMA: public
       DB_DATABASE: keycloak
       DB_USER: keycloak
+    volumes:
+      - type: bind
+        source: ./keycloak/themes/storium
+        target: /opt/jboss/keycloak/themes/storium
     depends_on:
       - db
 

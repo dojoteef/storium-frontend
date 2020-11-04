@@ -1,7 +1,6 @@
 """
 Suggestion database model
 """
-import logging
 from uuid import UUID
 from typing import Any, Dict, Optional
 
@@ -16,6 +15,10 @@ from woolgatherer.db_models.base import DBBaseModel
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.models.suggestion import SuggestionStatus, SuggestionType
 from woolgatherer.utils.settings import Settings
+from woolgatherer.utils.logging import get_logger
+
+
+logger = get_logger()
 
 
 class Suggestion(
@@ -44,7 +47,7 @@ class Suggestion(
         if self.type == SuggestionType.scene_entry:
             return Settings.scene_entry_parameters.dict()
 
-        logging.error(
+        logger.error(
             "Suggestion.figment_settings: Unexpected suggestion type %s!", self.type
         )
         return {}

@@ -5,7 +5,6 @@ import os
 import io
 import csv
 import json
-import logging
 from typing import Any, AsyncGenerator, Dict, Mapping, Sequence
 
 import aiofiles
@@ -17,8 +16,10 @@ from starlette.responses import PlainTextResponse, StreamingResponse
 from woolgatherer.db.session import get_db
 from woolgatherer.db.utils import load_query
 from woolgatherer.db_models.figmentator import FigmentatorStatus
+from woolgatherer.utils.logging import get_logger
 
 
+logger = get_logger()
 router = APIRouter()
 
 
@@ -130,11 +131,11 @@ async def get_judgement_contexts_csv(
                     break
 
             if not cards:
-                logging.fatal(f"Missing card data in suggestion {suggestion_id}")
+                logger.fatal(f"Missing card data in suggestion {suggestion_id}")
                 continue
 
             if not character:
-                logging.fatal(
+                logger.fatal(
                     f"Missing character data for {character_id}"
                     f" in suggestion {suggestion_id}"
                 )

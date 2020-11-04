@@ -1,7 +1,6 @@
 """
 Operations which can be conducted on suggestions
 """
-import logging
 from uuid import uuid4, UUID
 from functools import singledispatch
 from typing import Optional, Sequence, Tuple, Union
@@ -19,6 +18,10 @@ from woolgatherer.db_models.suggestion import (
     SuggestionType,
 )
 from woolgatherer.utils.settings import Settings
+from woolgatherer.utils.logging import get_logger
+
+
+logger = get_logger()
 
 
 async def get_or_create_suggestion(
@@ -42,13 +45,13 @@ async def get_or_create_suggestion(
             await suggestion.update(db)
 
             task = suggestions.create.delay(story_hash, context_hash, suggestion_type)
-            logging.debug("Started task %s", task.id)
+            logger.debug("Started task %s", task.id)
 
             return suggestion, Settings.user_feedback
 
         return suggestion, Settings.user_feedback
 
-    logging.debug("Creating suggestion for story_id: %s", story_hash)
+    logger.debug("Creating suggestion for story_id: %s", story_hash)
     suggestion = Suggestion(
         uuid=uuid4(),
         context=context,
@@ -59,7 +62,7 @@ async def get_or_create_suggestion(
     )
     await suggestion.insert(db)
     task = suggestions.create.delay(story_hash, context_hash, suggestion_type)
-    logging.debug("Started task %s", task.id)
+    logger.debug("Started task %s", task.id)
 
     return suggestion, Settings.user_feedback
 
@@ -69,7 +72,7 @@ async def get_suggestion(
     suggestion_id: UUID, *, db: Database, **kwargs  # pylint:disable=unused-argument
 ) -> Optional[Suggestion]:
     """ Get the current suggestion """
-    logging.debug("Getting suggestion for suggestion_id: %s", suggestion_id)
+    logger.debug("Getting suggestion for suggestion_id: %s", suggestion_id)
     suggestion = await Suggestion.select(db, where={"uuid": suggestion_id})
     return suggestion
 
@@ -87,7 +90,7 @@ async def get_suggestion_with_context(
     else:
         context_hash = context_or_hash
 
-    logging.debug(
+    logger.debug(
         "Getting suggestion of type %s for story_hash: %s", suggestion_type, story_hash
     )
 
@@ -110,7 +113,7 @@ async def finalize_suggestion(
     suggestion_id: UUID, entry: SceneEntry, *, db: Database
 ) -> None:
     """ Get the current suggestion """
-    logging.debug("Finalizing suggestion for suggestion_id: %s", suggestion_id)
+    logger.debug("Finalizing suggestion for suggestion_id: %s", suggestion_id)
     suggestion = await get_suggestion(suggestion_id, db=db)
     if not suggestion:
         raise InvalidOperationError("Unknown suggestion")

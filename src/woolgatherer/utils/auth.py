@@ -2,8 +2,7 @@
 Authentication utils
 """
 import time
-import logging
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from authlib.common.urls import extract_params, add_params_to_qs
 from authlib.integrations.base_client import OAuthError
@@ -23,6 +22,43 @@ from starlette.status import HTTP_303_SEE_OTHER, HTTP_403_FORBIDDEN
 
 from woolgatherer.errors import UnauthorizedError
 from woolgatherer.utils.settings import Settings
+from woolgatherer.utils.logging import get_logger
+
+
+logger = get_logger()
+
+
+OAUTH_CLIENT_ARGS: Dict[str, Any] = {"scope": "openid email profile roles"}
+if Settings.debug:
+    from authlib.integrations.httpx_client.utils import (  # pylint:disable=ungrouped-imports
+        HTTPX_CLIENT_KWARGS,
+    )
+
+    HTTPX_CLIENT_KWARGS.append("event_hooks")
+
+    async def log_auth_request(request):
+        """ Log an auth request """
+        logger.trace(
+            "request: method=%s, url=%s, headers=%s, content=%s",
+            request.method,
+            request.url.raw,
+            request.headers.raw,
+            b"".join(iter(request.stream)),
+        )
+
+    async def log_auth_response(response):
+        """ Log an auth response """
+        logger.trace(
+            "response: url=%s, headers=%s, content=%s",
+            response.url.raw,
+            response.headers.raw,
+            response.content,
+        )
+
+    OAUTH_CLIENT_ARGS["event_hooks"] = {
+        "request": [log_auth_request],
+        "response": [log_auth_response],
+    }
 
 
 oauth = OAuth(
@@ -38,7 +74,7 @@ oauth = OAuth(
 oauth.register(
     name="storium",
     server_metadata_url=Settings.oauth_url,
-    client_kwargs={"scope": "openid"},
+    client_kwargs=OAUTH_CLIENT_ARGS,
 )
 
 
@@ -99,7 +135,7 @@ async def validate_refresh_token(conn: HTTPConnection):
                     conn.session["user"] = dict(user)
                 except OAuthError as exc:
                     # The refresh token has likely expired
-                    logging.error(exc)
+                    logger.error(exc)
 
 
 def parse_scopes(conn: HTTPConnection):

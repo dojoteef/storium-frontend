@@ -1,7 +1,6 @@
 """
 Operations which can be conducted on feedback
 """
-import logging
 from uuid import UUID
 from typing import Sequence
 
@@ -14,6 +13,10 @@ from woolgatherer.models.feedback import FeedbackResponse
 from woolgatherer.models.suggestion import SuggestionStatus
 from woolgatherer.ops import suggestions as suggestion_ops
 from woolgatherer.utils.settings import Settings
+from woolgatherer.utils.logging import get_logger
+
+
+logger = get_logger()
 
 
 async def submit_feedback(
@@ -24,7 +27,7 @@ async def submit_feedback(
     suggestion is in the database, otherwise an exception for a constraint violation
     will be raised.
     """
-    logging.debug("Registering feedback for suggestion_id: %s", suggestion_id)
+    logger.debug("Registering feedback for suggestion_id: %s", suggestion_id)
     suggestion = await suggestion_ops.get_suggestion(suggestion_id, db=db)
     if not suggestion:
         raise InvalidOperationError("Unknown suggestion")

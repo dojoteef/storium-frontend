@@ -2,7 +2,7 @@
 
 This is the official repository of the [web
 frontend](https://storium.cs.umass.edu) for the EMNLP 2020 long paper
-*[STORIUM: A Dataset and Evaluation Platform for Story
+*[STORIUM: A Dataset and Evaluation Platform for Machine-in-the-Loop Story
 Generation](https://arxiv.org/abs/2010.01717)*.
 
 ## Python Package Naming

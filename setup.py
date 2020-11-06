@@ -97,7 +97,7 @@ setup(
         "itsdangerous==1.1.0",  # required by starlette for sessions
         "regex==2020.1.8",
         "pydantic==1.1.1",
-        "uvicorn==0.10.0",
+        "uvicorn==0.12.2",
         "gunicorn==19.9.0",
         "databases==0.2.5",
         "sqlalchemy==1.3.10",

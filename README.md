@@ -39,3 +39,15 @@ include the flag `-t`, like `gw-createdb -t` it will create the tables as well.
 This is fine to do in dev, but you should not do this in production. In
 production you should run _[alembic](https://alembic.sqlalchemy.org/)_
 migrations.
+
+
+## Cite
+
+```bibtex
+@inproceedings{akoury2020storium,
+  Author = {Nader Akoury, Shufan Wang, Josh Whiting, Stephen Hood, Nanyun Peng and Mohit Iyyer},
+  Booktitle = {Empirical Methods for Natural Language Processing},
+  Year = "2020",
+  Title = {{STORIUM}: {A} {D}ataset and {E}valuation {P}latform for {S}tory {G}eneration}
+}
+```

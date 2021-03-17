@@ -19,7 +19,7 @@ EXTRAS_REQUIRE["dev"] = [
     "requests",
 ]
 EXTRAS_REQUIRE["redis"] = ["aioredis==1.3.1"]
-EXTRAS_REQUIRE["build"] = ["docker-compose==1.24.1", "idna==2.7"]
+EXTRAS_REQUIRE["build"] = ["docker-compose==1.25.5", "idna==2.7"]
 EXTRAS_REQUIRE["scipy"] = ["scipy==1.3.3"]
 EXTRAS_REQUIRE["sqlite"] = ["aiosqlite==0.10.0"]
 EXTRAS_REQUIRE["postgresql"] = ["asyncpg==0.20.0", "psycopg2==2.8.4"]
@@ -97,7 +97,7 @@ setup(
         "itsdangerous==1.1.0",  # required by starlette for sessions
         "regex==2020.1.8",
         "pydantic==1.1.1",
-        "uvicorn==0.12.2",
+        "uvicorn[standard]==0.13.4",
         "gunicorn==19.9.0",
         "databases==0.2.5",
         "sqlalchemy==1.3.10",

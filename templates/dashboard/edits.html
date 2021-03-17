@@ -1,7 +1,11 @@
 {% import "utils.html" as utils %}
 {% set metric_types = ('rouge-4', 'rouge-l', 'rouge-w', 'user') %}
 
+{% if "user_edits" in scopes %}
+<h2>Edited Suggestions</h2>
+{% else %}
 <h2>Sample Edited Suggestions</h2>
+{% endif %}
 <table id="suggestions-table" data-order-classes="true" class="table table-striped text-center invisible" style="width:100%">
   <thead class="thead-dark">
     <tr>

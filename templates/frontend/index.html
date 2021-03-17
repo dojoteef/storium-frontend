@@ -49,9 +49,19 @@
                 {{ license|safe }}
               </div>
               <div class="modal-footer">
+                {% if "dataset" in scopes %}
                 By clicking "Download Dataset" you are consenting to be bound by the above Agreement.
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <a class="btn btn-info" href="/data/download" role="button" title="Download Dataset">Download Dataset</a>
+                {% elif request.session.get("user", None) %}
+                <p>You must email the first author to request access before you can download the dataset.</p>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <a class="btn btn-info disabled" href="/" role="button" title="Download Dataset">Download Dataset</a>
+                {% else  %}
+                <p>You must be logged in before you can download the dataset.</p>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <a class="btn btn-info" href="/data/download" role="button" title="Download Dataset">Login/Create Account</a>
+                {% endif %}
               </div>
             </div>
           </div>

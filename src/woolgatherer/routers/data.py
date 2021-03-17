@@ -16,7 +16,7 @@ router = APIRouter()
 @router.get("/download", summary="Download the dataset")
 async def download():
     """
-    Initiate a download if the user is logged in an authorized
+    Initiate a download if the user is logged in and authorized
     """
     if not Settings.dataset:
         raise HTTPException(HTTP_404_NOT_FOUND, "Dataset path not specified")

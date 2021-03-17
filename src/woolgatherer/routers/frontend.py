@@ -28,7 +28,7 @@ async def initialize():
 
 
 @router.get("/", summary="Get the frontend for the woolgatherer service")
-async def get_dashboard(request: Request):
+async def get_frontend(request: Request):
     """
     This method returns a template for the website frontend
     """

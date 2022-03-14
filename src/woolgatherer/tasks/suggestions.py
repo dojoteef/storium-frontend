@@ -23,7 +23,7 @@ from woolgatherer.db_models.suggestion import (
 )
 from woolgatherer.errors import ProcessingError
 from woolgatherer.tasks import app
-from woolgatherer.models.range import compute_full_range
+from woolgatherer.models.range import compute_full_range, split_sentences, RangeUnits
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.ops import figmentator as figmentator_ops
 from woolgatherer.utils.settings import Settings
@@ -99,6 +99,16 @@ async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
                     )
 
                 if status == 200 or trimmed != description:
+                    # Trim to the last sentence boundary
+                    fragments = RangeUnits.sentences.chunk(trimmed)
+                    sentences = RangeUnits.sentences.chunk(trimmed, keep_fragments=False)
+
+                    # Only if the last sentence is a fragment
+                    if fragments != sentences:
+                        trimmed = trimmed[: trimmed.rindex(fragments[-1])]
+                        suggestion.generated.description = trimmed
+
+                    # Mark suggestion complete
                     suggestion.status = SuggestionStatus.done
 
                 success = True

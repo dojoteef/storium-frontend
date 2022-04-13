@@ -84,7 +84,7 @@ setup(
         "py-rouge==1.1",
         "aiocache==0.11.1",
         "aiofiles==0.4.0",
-        "aiohttp==3.6.2",
+        "aiohttp==3.7.4",
         "alembic==1.2.1",
         "alembic-autogenerate-enums==0.0.2",
         "async_lru==1.0.2",

@@ -122,6 +122,4 @@ async def finalize_suggestion(
         raise InvalidOperationError("Cannot finalize a suggestion twice")
 
     suggestion.finalized = entry
-    await suggestion.update(
-        db, include_columns="finalized", where={"uuid": suggestion_id}
-    )
+    await suggestion.update(db, where={"uuid": suggestion_id})

@@ -11,6 +11,7 @@ from typing import Any, Dict, Tuple
 from importlib.util import find_spec
 
 import aiofiles
+from async_lru import alru_cache as lru_cache
 
 try:
     from asyncpg.exceptions import (  # pylint: disable=unused-import
@@ -25,6 +26,7 @@ def has_postgres() -> bool:
     return find_spec("asyncpg") is not None
 
 
+@lru_cache(maxsize=None)
 async def load_query(filename: str) -> str:
     """
     Load the query from the file and return it

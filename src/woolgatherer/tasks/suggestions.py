@@ -27,7 +27,7 @@ from woolgatherer.models.range import compute_full_range, split_sentences, Range
 from woolgatherer.models.storium import SceneEntry
 from woolgatherer.ops import figmentator as figmentator_ops
 from woolgatherer.utils.settings import Settings
-from woolgatherer.db.utils import json_dumps
+from woolgatherer.db.utils import json_dumps, load_query
 
 
 logger = get_task_logger(__name__)
@@ -60,7 +60,15 @@ async def _create(story_id: str, context_hash: str, suggestion_type: SuggestionT
         if not figmentator:
             raise ProcessingError("Cannot find figmentator")
 
-        if figmentator.status == FigmentatorStatus.inactive:
+        # Check the monthly quota and reassign if needed
+        result = await db.fetch_one(
+            await load_query("monthly_totals.sql"),
+            {"model_id": figmentator_mapping.model_id}
+        )
+        if (
+            figmentator.status == FigmentatorStatus.inactive
+            or result["suggestion_count"] > figmentator.quota
+        ):
             async with ClientSession() as session:
                 figmentator = await figmentator_ops.reassign_figmentator(
                     suggestion, figmentator, db=db, session=session
@@ -85,8 +93,12 @@ async def _figmentate(suggestion: Suggestion, figmentator: Figmentator):
         async with Database(Settings.dsn) as db:
             if 200 <= status < 300:
                 try:
-                    # Make sure to trim if necessary
+                    # Ensure we actually generated some text
                     description = entry.get("description", "")
+                    if description == suggestion.generated.description:
+                        raise ProcessingError("Failed to generate a suggestion!")
+
+                    # Make sure to trim if necessary
                     full_range = compute_full_range(**suggestion.figment_settings)
                     entry["description"] = trimmed = full_range.trim(description)
 

@@ -24,9 +24,15 @@ services:
     volumes:
       - woolgatherer-db-data:/var/lib/postgresql/data
       - type: bind
+        read_only: true
+        source: ./sql/postgres
+        target: /usr/local/share/woolgatherer
+      - type: bind
+        read_only: true
         source: ./keycloak/scripts/create_db_user.sh
         target: /docker-entrypoint-initdb.d/10-create-keycloak-user.sh
       - type: bind
+        read_only: true
         source: ./keycloak/scripts/create_db.sh
         target: /docker-entrypoint-initdb.d/20-create-keycloak-db.sh
     restart: unless-stopped
@@ -41,6 +47,7 @@ services:
     image: redis:5-alpine
     volumes:
       - type: bind
+        read_only: true
         source: ./redis.conf
         target: /usr/local/etc/redis/redis.conf
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
@@ -56,6 +63,7 @@ services:
       DB_USER: keycloak
     volumes:
       - type: bind
+        read_only: true
         source: ./keycloak/themes/storium
         target: /opt/jboss/keycloak/themes/storium
     depends_on:

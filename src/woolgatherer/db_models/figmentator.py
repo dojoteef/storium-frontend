@@ -55,3 +55,4 @@ class Figmentator(DBBaseModel):
     name: str = Field(..., index=True)
     type: SuggestionType = Field(...)
     status: FigmentatorStatus = Field(FigmentatorStatus.inactive)
+    quota: int = Field(-1, server_default="-1")

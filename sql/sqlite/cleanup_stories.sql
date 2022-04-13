@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE most_recent(game_pid, timestamp) AS 
+CREATE TEMPORARY TABLE most_recent(game_pid, timestamp) AS
   (SELECT
     json_extract(s.story, '$.game_pid') AS game_pid,
     max(json_extract(s.story, '$.exported_at')) AS timestamp

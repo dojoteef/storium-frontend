@@ -43,7 +43,7 @@ def collect_data_files(paths: List[str]):
                 root_files = [
                     os.path.join(root, f)
                     for f in files
-                    if os.path.splitext(f) not in EXCLUDE_EXTS
+                    if os.path.splitext(f)[1] not in EXCLUDE_EXTS
                 ]
 
                 if root_files:
@@ -87,6 +87,7 @@ setup(
         "aiohttp==3.6.2",
         "alembic==1.2.1",
         "alembic-autogenerate-enums==0.0.2",
+        "async_lru==1.0.2",
         "authlib==0.15.2",
         "httpx==0.16.1",  # required by authlib
         "celery==4.3.0",
@@ -108,6 +109,11 @@ setup(
         # not correctly pin the version which causes issues with the latest
         # release of vine; make sure to use a compatible version
         "vine==1.3.0",
+        # we don't explicitly use markupsafe, but jinja2 does and they do
+        # not correctly pin the version which causes issues with the latest
+        # release of markupsafe; make sure to use a compatible version
+        # https://github.com/pallets/jinja/issues/1585
+        "markupsafe<2.1",
     ],
     extras_require=EXTRAS_REQUIRE,
 )

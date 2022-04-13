@@ -5,7 +5,7 @@ import json
 import uuid
 import datetime
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, Mapping, Union
 import sqlalchemy as sa
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID, JSONB as _JSONB
@@ -62,6 +62,7 @@ class GUID(TypeDecorator):
         raise NotImplementedError()
 
 
+# Mapping from python type to SQLAlchemy type
 TypeMapping: Dict[type, sa.types.TypeEngine] = {
     str: sa.String,
     int: sa.Integer,
@@ -77,7 +78,6 @@ TypeMapping: Dict[type, sa.types.TypeEngine] = {
     datetime.time: sa.Time,
     datetime.datetime: sa.DateTime,
 }
-
 
 # Define a total ordering for sqlalchemy types, such that if a column could be
 # specified by either type, it chooses the most best type based on this
@@ -95,6 +95,63 @@ TypeOrder: Dict[sa.types.TypeEngine, int] = {
     sa.Time: 2,
     sa.DateTime: 1,
 }
+
+
+def get_sa_type(from_type: type):
+    """ Compute the SQLAlchemy type from the passed in type """
+    base_type = from_type
+    origin = getattr(from_type, "__origin__", None)
+    if origin:
+        # Need to do different processing if the type is wrapped in a special typing
+        # annotation, e.g. Union, Dict, etc.
+        if origin is Union:
+            union_args = set(getattr(from_type, "__args__"))
+            union_args.discard(type(None))
+
+            if len(union_args) == 1:
+                base_type = union_args.pop()
+            else:
+                union_args.discard(Json)
+                union_args.discard(Dict[str, Any])
+                if all(issubclass(t, BaseModel) for t in union_args):
+                    base_type = Json
+                    union_args.clear()
+
+            if union_args:
+                raise AttributeError("Unsupported annotation type!")
+        elif issubclass(origin, Mapping):
+            mapping_args = getattr(from_type, "__args__")
+            if not issubclass(mapping_args[0], str):
+                raise AttributeError("Mapping key must be a string!")
+            base_type = Json
+        else:
+            # Technically, PostgreSQL supports an array (which could be
+            # specified as a List or Tuple), but only that database does. Since
+            # I want this to also work with SQLite, supporting lists is not an
+            # option.
+            raise AttributeError(
+                "Only Optional, Union, Dict annotations currently supported!"
+            )
+
+    # Now convert the detected types into SQLAlchemy types
+    sa_types: Set[sa.types.TypeEngine] = set()
+    for type_ in base_type.__mro__:
+        if type_ in TypeMapping:
+            sa_types.add(TypeMapping[type_])
+
+    if not sa_types:
+        raise AttributeError(
+            f"{field.name} must be convertible to sqlalchemy type!"
+        )
+
+    sa_type: sa.types.TypeEngine = sorted(
+        list(sa_types), key=lambda t: TypeOrder[t]
+    )[0]
+
+    if sa_type is sa.Enum:
+        sa_type = sa.Enum(from_type)
+
+    return sa_type
 
 
 def to_db_type(obj: Any) -> Any:

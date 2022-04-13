@@ -3,6 +3,7 @@ The base class for all SQLAlchemy models
 """
 from typing import (
     Any,
+    ClassVar,
     Dict,
     List,
     Mapping,
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
 _ExtraFieldMappings: Dict[str, str] = {
     "index": "index",
     "unique": "unique",
+    "nullable": "nullable",
     "primary_key": "primary_key",
     "autoincrement": "autoincrement",
     "server_default": "server_default",
@@ -68,8 +70,14 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
 
     __table__: sa.Table
     __metadata__: sa.MetaData = sa.MetaData()
+    __slots__ = ('_modified',)
+
+    # What if any fields have been updated after creation. This allows db update to only
+    # set newly changed values.
+    _modified: Dict[str, bool]
 
     id: Optional[int] = Field(..., primary_key=True, autoincrement=True)
+
 
     @classmethod
     def __init_subclass__(cls, constraints: Sequence[Constraint] = tuple()) -> None:
@@ -104,59 +112,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
                 if "foriegn_key" in extra:
                     foriegn_key = extra["foriegn_key"]
 
-            # Need to do different processing if the type is wrapped in a special typing
-            # annotation, e.g. Union, Dict, etc.
-            base_type_: type = field.type_
-            origin = getattr(field.type_, "__origin__", None)
-            if origin:
-                if origin is Union:
-                    union_args = set(getattr(field.type_, "__args__"))
-                    union_args.discard(type(None))
-
-                    if len(union_args) == 1:
-                        base_type_ = union_args.pop()
-                    else:
-                        union_args.discard(Json)
-                        union_args.discard(Dict[str, Any])
-                        if all(issubclass(t, BaseModel) for t in union_args):
-                            base_type_ = Json
-                            union_args.clear()
-
-                    if union_args:
-                        raise AttributeError("Unsupported annotation type!")
-                elif issubclass(origin, Mapping):
-                    mapping_args = getattr(field.type_, "__args__")
-                    if not issubclass(mapping_args[0], str):
-                        raise AttributeError("Mapping key must be a string!")
-                    base_type_ = Json
-                else:
-                    # Technically, PostgreSQL supports an array (which could be
-                    # specified as a List or Tuple), but only that database does. Since
-                    # I want this to also work with SQLite, supporting lists is not an
-                    # option.
-                    raise AttributeError(
-                        "Only Optional, Union, Dict annotations currently supported!"
-                    )
-
-            # Now convert the detected types into SQLAlchemy types
-            sa_types: Set[sa.types.TypeEngine] = set()
-            for type_ in base_type_.__mro__:
-                if type_ in types.TypeMapping:
-                    sa_types.add(types.TypeMapping[type_])
-
-            if not sa_types:
-                raise AttributeError(
-                    f"{field.name} must be convertible to sqlalchemy type!"
-                )
-
-            sa_type: sa.types.TypeEngine = sorted(
-                list(sa_types), key=lambda t: types.TypeOrder[t]
-            )[0]
-
-            if sa_type is sa.Enum:
-                sa_type = sa.Enum(field.type_)
-
-            args = [field.name, sa_type]
+            args = [field.name, types.get_sa_type(field.type_)]
             if foriegn_key:
                 args.append(foriegn_key)
 
@@ -171,12 +127,24 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
 
         keep_untouched: Tuple[type, ...] = (sa.MetaData,)
 
+    def __new__(cls: Type['DBBaseModel'], **kwargs) -> 'DBBaseModel':
+        self = super().__new__(cls)
+        object.__setattr__(self, "_modified", {})
+
+        return self
+
+    def __setattr__(self, key: str, value: Any):
+        """ Set an attribute """
+        super().__setattr__(key, value)
+        self._modified[key] = True
+
     def db_dict(
         self,
         *,
         include: Optional[Union[str, Set[str]]] = None,
         exclude: Optional[Union[str, Set[str]]] = None,
         defaults: bool = False,
+        modified_only: bool = False
     ):
         """
         Collect the fields that have been set on the model, optionally including
@@ -197,6 +165,9 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
 
         values = {}
         for name, field in type(self).__dict__["__fields__"].items():
+            if modified_only and not name in self._modified:
+                continue
+
             if name in include:
                 values[name] = getattr(self, name)
             elif (
@@ -229,11 +200,11 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
                 )
             )
         )
+        self._modified.clear()
 
     async def delete(self, db: Database, *, where: Optional[Dict[str, Any]] = None):
         """
-        Insert the current model into the db. Make sure to only insert values that have
-        actually been set, or defaults if provided.
+        Delete the current model from the db. Either and id or a where clause must be provided.
         """
         table = type(self).__table__
         query = table.delete()
@@ -249,6 +220,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
             )
 
         await db.execute(query=query)
+        self._modified.clear()
 
     async def update(
         self,
@@ -257,6 +229,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
         include_columns: Optional[Union[str, Set[str]]] = None,
         exclude_columns: Optional[Union[str, Set[str]]] = None,
         where: Optional[Dict[str, Any]] = None,
+        modified_only: bool = True
     ):
         """
         Update the model the db. Make sure to only update values that have
@@ -264,7 +237,11 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
         """
         table = type(self).__table__
         query = table.update(
-            values=self.db_dict(include=include_columns, exclude=exclude_columns)
+            values=self.db_dict(
+                include=include_columns,
+                exclude=exclude_columns,
+                modified_only=modified_only,
+            )
         )
 
         if where:
@@ -278,6 +255,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
             )
 
         await db.execute(query=query)
+        self._modified.clear()
 
     @classmethod
     def _select_query(
@@ -285,7 +263,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
         columns: Optional[Union[str, Sequence[str]]] = None,
         where: Optional[Dict[str, Any]] = None,
     ) -> Optional["DBModel"]:
-        """ Generate an insert statement for the type """
+        """ Generate a select statement for the type """
         table = cls.__table__
         if columns:
             if isinstance(columns, str):
@@ -294,7 +272,10 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
             columns = tuple(table.columns[c] for c in columns)
             query = select(columns=columns)
         else:
-            query = table.select()
+            # Explicitly select all columns rather than empty `table.select()`, otherwise
+            # the databases package will return "raw" results, i.e. string result rather than
+            # converting to python types
+            query = select(columns=tuple(table.columns.values()))
 
         if where:
             clauses = tuple(table.columns[c] == v for c, v in where.items())
@@ -320,7 +301,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
         columns: Optional[Union[str, Sequence[str]]] = None,
         where: Optional[Dict[str, Any]] = None,
     ) -> Optional["DBModel"]:
-        """ Generate an insert statement for the type """
+        """ Generate a select statement for the type """
         result = await db.fetch_one(
             query=cls._select_query(columns=columns, where=where)
         )
@@ -333,7 +314,7 @@ class DBBaseModel(BaseModel, metaclass=DBModelMetaClass):
         columns: Optional[Union[str, Sequence[str]]] = None,
         where: Optional[Dict[str, Any]] = None,
     ) -> List["DBModel"]:
-        """ Generate an insert statement for the type """
+        """ Generate a select statement for the type """
         results = await db.fetch_all(
             query=cls._select_query(columns=columns, where=where)
         )

@@ -18,6 +18,7 @@ RUN apk add --no-cache libpq py3-scipy \
       && apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev libffi-dev cargo make \
       && $PIP_CMD .[postgresql,redis] && apk del .build-deps \
       && rm -rf setup.py alembic.ini src alembic scripts \
+      && mkdir -p /usr/local/share/woolgatherer \
       && ln -s /usr/local/share/woolgatherer/alembic.ini . \
       && ln -s /usr/local/share/woolgatherer/alembic .
 
@@ -26,7 +27,8 @@ ENV PYTHONPATH=/usr/lib/python3.8/site-packages
 
 # Create a user and group that actually run the app, so we aren't running as root
 RUN addgroup -S gw && mkdir /home/gw && adduser -S gw -G gw -h /home/gw \
-      && chown gw:gw /home/gw
+      && chown -R gw:gw /usr/local/share/woolgatherer \
+      && chown gw:gw /home/gw  && chown -R gw:gw .
 
 # Tell docker that all future commands should run as the gw user
 USER gw

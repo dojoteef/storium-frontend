@@ -49,6 +49,13 @@ def add_args(parser: ArgumentParser):
         default=FigmentatorStatus.inactive,
         help="What type of suggestion this model generates",
     )
+    parser.add_argument(
+        "-q",
+        "--quota",
+        type=int,
+        default=-1,
+        help="Monthly quota of suggestions for this model",
+    )
 
 
 def update_args(parser: ArgumentParser):
@@ -76,6 +83,13 @@ def update_args(parser: ArgumentParser):
         choices=tuple(FigmentatorStatus),
         default=SUPPRESS,
         help="What type of suggestion this model generates",
+    )
+    parser.add_argument(
+        "-q",
+        "--quota",
+        type=int,
+        default=-1,
+        help="Monthly quota of suggestions for this model",
     )
 
 

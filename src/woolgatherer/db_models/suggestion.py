@@ -1,14 +1,16 @@
 """
 Suggestion database model
 """
-from uuid import UUID
+from datetime import datetime
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 # pylint incorrectly complains about unused import for UniqueConstraint... not sure why
 from sqlalchemy.schema import (  # pylint:disable=unused-import
     ForeignKey,
     UniqueConstraint,
 )
+from sqlalchemy import text
 from pydantic import Field
 
 from woolgatherer.db_models.base import DBBaseModel
@@ -38,6 +40,7 @@ class Suggestion(
         SuggestionStatus.pending, server_default=SuggestionStatus.pending
     )
     story_hash: str = Field(..., index=True, foriegn_key=ForeignKey("story.hash"))
+    timestamp: datetime = Field(None, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
     @property
     def figment_settings(self) -> Dict[str, Any]:

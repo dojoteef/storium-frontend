@@ -91,7 +91,7 @@ setup(
         "authlib==0.15.2",
         "httpx==0.16.1",  # required by authlib
         "celery==4.3.0",
-        "jinja2==2.10.3",
+        "jinja2==2.11.3",
         "asgiref==3.2.2",
         "fastapi==0.45.0",
         "markdown==3.3.3",

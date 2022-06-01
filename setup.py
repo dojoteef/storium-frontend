@@ -89,7 +89,7 @@ setup(
         "alembic-autogenerate-enums==0.0.2",
         "async_lru==1.0.2",
         "authlib==0.15.2",
-        "httpx==0.16.1",  # required by authlib
+        "httpx==0.23.0",  # required by authlib
         "celery==4.3.0",
         "jinja2==2.10.3",
         "asgiref==3.2.2",

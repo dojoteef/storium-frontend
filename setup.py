@@ -80,7 +80,7 @@ setup(
     ],
     data_files=DATA_FILES,
     install_requires=[
-        "nltk==3.4.5",
+        "nltk==3.6.6",
         "py-rouge==1.1",
         "aiocache==0.11.1",
         "aiofiles==0.4.0",

@@ -16,7 +16,7 @@ COPY templates templates
 # and install the libpq dependency for postgresql
 RUN apk add --no-cache libpq py3-scipy \
       && apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev libffi-dev cargo make \
-      && $PIP_CMD .[postgresql,redis] && apk del .build-deps \
+      && $PIP_CMD install -U pip && $PIP_CMD .[postgresql,redis] && apk del .build-deps \
       && rm -rf setup.py alembic.ini src alembic scripts \
       && mkdir -p /usr/local/share/woolgatherer \
       && ln -s /usr/local/share/woolgatherer/alembic.ini . \

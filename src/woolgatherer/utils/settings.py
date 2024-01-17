@@ -6,12 +6,8 @@ from typing import Optional, Tuple
 from pydantic import BaseSettings, Field, SecretStr
 
 from woolgatherer.db.utils import has_postgres
-from woolgatherer.models.feedback import (
-    FeedbackEntryType,
-    FeedbackType,
-    FeedbackPrompt,
-    FeedbackScale,
-)
+from woolgatherer.models.feedback import (FeedbackEntryType, FeedbackPrompt,
+                                          FeedbackScale, FeedbackType)
 from woolgatherer.models.suggestion import SceneEntryParameters
 
 
@@ -29,8 +25,6 @@ class _DevSettings(BaseSettings):
     session_token: SecretStr = Field("secret", description="Session cookie token")
 
     dataset: str = Field(None, description="Filename for the dataset")
-
-    gtag_id: str = Field("", description="Google analytics ID")
 
     oauth_url: str = Field(None, description="The URL for openid config")
     oauth_client_id: str = Field("storium", description="The oauth client id")

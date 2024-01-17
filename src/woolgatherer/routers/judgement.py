@@ -1,23 +1,22 @@
 """
 This router handles the website frontend
 """
-import os
-import io
 import csv
+import io
 import json
+import os
 from typing import Any, AsyncGenerator, Dict, Mapping, Sequence
 
 import aiofiles
 from databases import Database
 from fastapi import APIRouter, Depends, Header, HTTPException
-from starlette.status import HTTP_406_NOT_ACCEPTABLE
 from starlette.responses import PlainTextResponse, StreamingResponse
+from starlette.status import HTTP_406_NOT_ACCEPTABLE
 
 from woolgatherer.db.session import get_db
 from woolgatherer.db.utils import load_query
 from woolgatherer.db_models.figmentator import FigmentatorStatus
 from woolgatherer.utils.logging import get_logger
-
 
 logger = get_logger()
 router = APIRouter()
@@ -161,7 +160,13 @@ async def get_judgement_contexts_csv(
 
             yield csv_row.getvalue()
 
-    return StreamingResponse(get_as_csv(), media_type="text/csv")
+    return StreamingResponse(
+        get_as_csv(),
+        headers={
+            "content-type": "application/octet-stream; charset=utf-8",
+            "content-disposition": 'attachment; filename="judgement_contexts.csv"; filename*="judgement_contexts.csv"',
+        },
+    )
 
 
 async def get_judgement_contexts_json(
@@ -191,4 +196,10 @@ async def get_judgement_contexts_json(
             )
         yield "\n]"
 
-    return StreamingResponse(get_as_json(), media_type="text/json")
+    return StreamingResponse(
+        get_as_json(),
+        headers={
+            "content-type": "application/octet-stream; charset=utf-8",
+            "content-disposition": 'attachment; filename="judgement_contexts.json"; filename*="judgement_contexts.json"',
+        },
+    )

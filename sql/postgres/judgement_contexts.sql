@@ -21,26 +21,10 @@ FROM (
 
     INNER JOIN story AS s
     ON sg.story_hash = s.hash
-
-    LEFT OUTER JOIN feedback AS ff
-    ON sg.uuid = ff.suggestion_id AND ff.type::text = 'fluency'
-
-    LEFT OUTER JOIN feedback AS fl
-    ON sg.uuid = fl.suggestion_id AND fl.type::text = 'likeability'
-
-    LEFT OUTER JOIN feedback AS fr
-    ON sg.uuid = fr.suggestion_id AND fr.type::text = 'relevance'
-
-    LEFT OUTER JOIN feedback AS fc
-    ON sg.uuid = fc.suggestion_id AND fc.type::text = 'coherence'
   WHERE
     sg.finalized::text != 'null'
     AND :status @> array[m.status]
     AND s.story->>'game_pid' != ALL(:blacklist)
-    AND ff.response IS NOT NULL
-    AND fl.response IS NOT NULL
-    AND fr.response IS NOT NULL
-    AND fc.response IS NOT NULL
   ORDER BY sg.id
 ) AS context
 WHERE context.rno::FLOAT4 <= :limit

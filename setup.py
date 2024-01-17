@@ -93,7 +93,7 @@ setup(
         "celery==4.3.0",
         "jinja2==2.10.3",
         "asgiref==3.2.2",
-        "fastapi==0.45.0",
+        "fastapi==0.65.2",
         "markdown==3.3.3",
         "itsdangerous==1.1.0",  # required by starlette for sessions
         "regex==2020.1.8",

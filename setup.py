@@ -97,7 +97,7 @@ setup(
         "markdown==3.3.3",
         "itsdangerous==1.1.0",  # required by starlette for sessions
         "regex==2020.1.8",
-        "pydantic==1.1.1",
+        "pydantic==1.6.2",
         "uvicorn[standard]==0.13.4",
         "gunicorn==19.9.0",
         "databases==0.2.5",
